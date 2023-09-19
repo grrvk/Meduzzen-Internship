@@ -13,6 +13,5 @@ docker-compose build\
 docker-compose up
 
 to run tests:\
-if *service "app" is not running*: 
-docker-compose up -d --build\
-docker-compose exec app pytest .
+docker build -f Dockerfile.tests -t app_tests . \
+docker run app_tests
