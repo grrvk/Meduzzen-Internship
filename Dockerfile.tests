@@ -1,0 +1,13 @@
+FROM python:3.11
+
+
+WORKDIR /internship_fastapi_app_tests
+
+COPY requirements.txt .
+COPY requirements_dev.txt .
+
+RUN pip install --no-cache-dir --upgrade -r requirements_dev.txt
+
+COPY . .
+
+CMD ["python", "-m", "pytest"]
