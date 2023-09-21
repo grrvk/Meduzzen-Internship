@@ -2,15 +2,11 @@ from redis import asyncio as aioredis
 from fastapi import APIRouter, Depends
 from functools import lru_cache
 from typing import Annotated
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import sessionmaker
 
 from app.core.config import Settings
-from app.db.database import async_engine, get_async_session, REDIS_URL
+from app.db.database import async_engine, REDIS_URL
 
 router = APIRouter()
-
-Session = sessionmaker(autocommit=False, autoflush=False, bind=async_engine)
 
 
 @router.get("/")
@@ -33,6 +29,25 @@ async def info(settings: Annotated[Settings, Depends(get_settings)]):
         "host": settings.fast_api_host,
         "port": settings.fast_api_port,
     }
+
+
+@router.get("/redis")
+async def redis_check():
+    redis_conn = aioredis.from_url(REDIS_URL, encoding="utf8", decode_responses=True)
+    result = await redis_conn.ping()
+    return {
+        "redis-health": result,
+    }
+
+
+@router.get("/postgresql")
+async def get_specific_operations():
+    try:
+        async with async_engine.connect() as connection:
+            await connection.begin()
+            return {"postgres_status": "ok"}
+    except Exception as e:
+        return {"postgres_status": "error", "error_message": str(e)}
 
 
 @router.on_event("startup")

@@ -1,15 +1,10 @@
 import sys
 from fastapi import FastAPI
 import uvicorn
-import asyncio
-from sqlalchemy import MetaData
 
 sys.path.append(".")
 from app.routers import router
 from app.core.config import settings
-
-
-meta = MetaData()
 
 app = FastAPI()
 
