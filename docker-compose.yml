@@ -1,6 +1,14 @@
 version: '3.11'
 
 services:
+  db:
+    image: postgres:15
+    container_name: meduzzen-internship-local-db
+    env_file:
+      - .env.sample
+  redis:
+    image: redis:7
+    container_name: meduzzen-internship-local-redis
   app:
     build:
       context: .
@@ -9,4 +17,6 @@ services:
       - .env.sample
     ports:
       - "8000:8000"
-    #command: ["/internship_fastapi_app/docker/command.sh"]
+    depends_on:
+      - db
+      - redis
