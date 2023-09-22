@@ -46,17 +46,16 @@ async def redis_check():
 @router.get("/postgresql")
 async def db_check(session: AsyncSession = Depends(get_async_session)):
     try:
-        query = select(1)
-        result = await session.execute(query)
+        result = await session.execute(select(1))
         return {
             "status": "success",
             "data": result.scalar(),
             "details": None
         }
-    except Exception:
+    except Exception as e:
         return {
             "status": "error",
-            "data": None,
+            "error_message": str(e),
             "details": None
         }
 
@@ -69,7 +68,6 @@ async def startup_event():
 @router.on_event("startup")
 async def init_tables():
     async with async_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
 
 
