@@ -6,9 +6,13 @@ services:
     container_name: meduzzen-internship-local-db
     env_file:
       - .env.sample
+    ports:
+      - 5432:5432
   redis:
     image: redis:7
     container_name: meduzzen-internship-local-redis
+    ports:
+      - 6379:6379
   app:
     build:
       context: .

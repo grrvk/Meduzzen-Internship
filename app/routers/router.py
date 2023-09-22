@@ -3,8 +3,11 @@ from fastapi import APIRouter, Depends
 from functools import lru_cache
 from typing import Annotated
 
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.config import Settings
-from app.db.database import async_engine, REDIS_URL
+from app.db.database import async_engine, REDIS_URL, Base, SessionLocal, get_async_session
 
 router = APIRouter()
 
@@ -41,15 +44,32 @@ async def redis_check():
 
 
 @router.get("/postgresql")
-async def get_specific_operations():
+async def db_check(session: AsyncSession = Depends(get_async_session)):
     try:
-        async with async_engine.connect() as connection:
-            await connection.begin()
-            return {"postgres_status": "ok"}
-    except Exception as e:
-        return {"postgres_status": "error", "error_message": str(e)}
+        query = select(1)
+        result = await session.execute(query)
+        return {
+            "status": "success",
+            "data": result.scalar(),
+            "details": None
+        }
+    except Exception:
+        return {
+            "status": "error",
+            "data": None,
+            "details": None
+        }
 
 
 @router.on_event("startup")
 async def startup_event():
     redis_conn = aioredis.from_url(REDIS_URL, encoding="utf8", decode_responses=True)
+
+
+@router.on_event("startup")
+async def init_tables():
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+        await conn.run_sync(Base.metadata.create_all)
+
+
