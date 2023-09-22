@@ -1,6 +1,8 @@
 from typing import AsyncGenerator
 
-from redis import asyncio as aioredis
+
+from redis import asyncio as aioredis, Redis
+
 from sqlalchemy import MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
@@ -18,11 +20,17 @@ metadata = MetaData()
 async_engine = create_async_engine(DATABASE_URL, echo=True)
 SessionLocal = async_sessionmaker(async_engine)
 
-redis_conn = aioredis.from_url(REDIS_URL, encoding="utf8", decode_responses=True)
+redis_pool = None
+
+
+async def get_redis_db() -> Redis:
+    global redis_pool
+    if not redis_pool:
+        redis_pool = await aioredis.from_url(REDIS_URL)
+    return redis_pool
+
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         yield session
-
-
