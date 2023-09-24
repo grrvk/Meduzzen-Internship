@@ -1,5 +1,10 @@
 fastapi==0.103.1
 uvicorn==0.23.2
-pydantic==2.3.0
 python-dotenv==1.0.0
-pydantic-settings==2.0.3
+sqlalchemy[asyncio]~=2.0.21
+redis~=5.0.0
+aioredis~=2.0.1
+asyncio~=3.4.3
+psycopg2-binary
+pydantic_settings
+asyncpg

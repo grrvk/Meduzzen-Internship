@@ -13,3 +13,22 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+class DbSettings(BaseSettings):
+    db_host: str = str(os.environ.get("DB_HOST"))
+    db_port: int = os.environ.get("DB_PORT")
+    db_name: str = os.environ.get("DB_DATABASE")
+    db_user: str = os.environ.get("DB_USERNAME")
+    db_pass: str = os.environ.get("DB_PASSWORD")
+
+
+db_settings = DbSettings()
+
+
+class RedisSettings(BaseSettings):
+    redis_host: str = os.environ.get("REDIS_HOST")
+    redis_port: int = os.environ.get("REDIS_PORT")
+
+
+redis_settings = RedisSettings()
