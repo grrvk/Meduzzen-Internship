@@ -3,8 +3,6 @@ uvicorn==0.23.2
 python-dotenv==1.0.0
 sqlalchemy[asyncio]~=2.0.21
 redis~=5.0.0
-aioredis~=2.0.1
-asyncio~=3.4.3
-psycopg2-binary
-pydantic_settings
-asyncpg
+pydantic~=2.3.0
+pytest~=7.4.2
+alembic~=1.12.0
