@@ -12,7 +12,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     user_email = Column(String, nullable=False)
     user_firstname = Column(String, nullable=False)
     user_lastname = Column(String, nullable=False)
-    user_status = Column(String, nullable=True)
+    user_status = Column(Boolean, default=True, nullable=True)
     user_city = Column(String, nullable=True)
     user_phone = Column(String, nullable=True)
     user_avatar = Column(String, nullable=True)

@@ -9,7 +9,7 @@ class User(BaseModel):
     user_email: str
     user_firstname: str
     user_lastname: str
-    user_status: str
+    user_status: bool
     user_city: str
     user_phone: str
     user_avatar: str
@@ -20,7 +20,7 @@ class UserSignUpRequest(BaseModel):
     user_firstname: str
     user_lastname: str
     hashed_password: str
-    user_status: Optional[str] = None
+    user_status: Optional[bool] = None
     user_city: Optional[str] = None
     user_phone: Optional[str] = None
     user_avatar: Optional[str] = None
@@ -38,7 +38,7 @@ class UserUpdateRequest(BaseModel):
     user_email: Optional[str] = None
     user_firstname: Optional[str] = None
     user_lastname: Optional[str] = None
-    user_status: Optional[str] = None
+    user_status: Optional[bool] = None
     user_city: Optional[str] = None
     user_phone: Optional[str] = None
     user_avatar: Optional[str] = None
@@ -52,7 +52,6 @@ class UsersListResponse(BaseModel):
 
 
 class UserDetailResponse(BaseModel):
-    user_status: str
     user_city: str
     user_phone: str
     user_avatar: str
