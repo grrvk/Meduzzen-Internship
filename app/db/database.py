@@ -1,6 +1,5 @@
 from typing import AsyncGenerator
 
-
 from redis import asyncio as aioredis, Redis
 
 from sqlalchemy import MetaData
@@ -28,7 +27,6 @@ async def get_redis_db() -> Redis:
     if not redis_pool:
         redis_pool = await aioredis.from_url(REDIS_URL)
     return redis_pool
-
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:

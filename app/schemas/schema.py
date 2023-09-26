@@ -1,11 +1,11 @@
 import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
-class User(BaseModel):
-    user_id: int
+class UserSchema(BaseModel):
+    id: int
     user_email: str
     user_firstname: str
     user_lastname: str
@@ -26,6 +26,12 @@ class UserSignUpRequest(BaseModel):
     user_avatar: Optional[str] = None
     is_superuser: Optional[bool] = False
     created_at: Optional[datetime.datetime] = None
+
+    @field_validator('hashed_password')
+    def name_must_contain_space(cls, p):
+        if not p:
+            raise ValueError('Password cannot be blank')
+        return p.title()
 
 
 class UserSignInRequest(BaseModel):
