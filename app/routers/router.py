@@ -1,5 +1,5 @@
 from redis import Redis
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response
 from functools import lru_cache
 from typing import Annotated
 
@@ -60,13 +60,10 @@ async def add_user(
         user: UserSignUpRequest,
         user_service: Annotated[UsersService, Depends(users_service)]
 ):
-    try:
-        user_id = await user_service.add_user(user)
-        return {"user_id": user_id}
-    except Exception as e:
-        return {
-            "status": 500,
-            "error_message": str(e),
+    user_id = await user_service.add_user(user)
+    return {
+            "status": 200,
+            "data": user_id,
             "details": None
         }
 
@@ -77,15 +74,12 @@ async def add_user(
         user: UserUpdateRequest,
         user_service: Annotated[UsersService, Depends(users_service)]
 ):
-    try:
-        user_id = await user_service.edit_user(user_id, user)
-        return {"user_id": user_id}
-    except Exception as e:
-        return {
-            "status": 500,
-            "error_message": str(e),
-            "details": None
-        }
+    user_id = await user_service.edit_user(user_id, user)
+    return {
+        "status": 200,
+        "data": user_id,
+        "details": None
+    }
 
 
 @router.delete("/users/{user_id}")
@@ -93,30 +87,20 @@ async def add_user(
         user_id: int,
         user_service: Annotated[UsersService, Depends(users_service)]
 ):
-    try:
-        res = await user_service.delete_user(user_id)
-        return {"deleted": res}
-    except Exception as e:
-        return {
-            "status": 500,
-            "error_message": str(e),
-            "details": None
-        }
+    res = await user_service.delete_user(user_id)
+    return {
+        "status": 200,
+        "data": res,
+        "details": "deleted"
+    }
 
 
 @router.get("/users")
 async def get_all_users(
         user_service: Annotated[UsersService, Depends(users_service)]
 ):
-    try:
-        users = await user_service.get_all_users()
-        return users
-    except Exception as e:
-        return {
-            "status": 500,
-            "error_message": str(e),
-            "details": None
-        }
+    users = await user_service.get_all_users()
+    return users
 
 
 @router.get("/users/{user_id}")
@@ -124,15 +108,8 @@ async def read_item(
         user_id: int,
         user_service: Annotated[UsersService, Depends(users_service)]
 ):
-    try:
-        users = await user_service.get_user_by_id(user_id)
-        return users
-    except Exception as e:
-        return {
-            "status": 500,
-            "error_message": str(e),
-            "details": None
-        }
+    user = await user_service.get_user_by_id(user_id)
+    return user
 
 
 @router.get("/postgresql")
