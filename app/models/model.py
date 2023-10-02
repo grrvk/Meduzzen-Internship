@@ -4,7 +4,7 @@ from app.db.database import Base
 import pytz
 from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 
-from app.schemas.schema import UserSchema
+from app.schemas.schema import UserSchema, UserSignInRequest
 
 
 class User(Base):
@@ -23,10 +23,12 @@ class User(Base):
     created_at = Column(TIMESTAMP(timezone=True), default=datetime.now(timezone.utc))
     updated_at = Column(TIMESTAMP(timezone=True), default=datetime.now(timezone.utc))
 
+
     def to_read_model(self) -> UserSchema:
         return UserSchema(
             id=self.id,
             user_email=self.user_email,
+            hashed_password = self.hashed_password,
             user_firstname=self.user_firstname,
             user_lastname=self.user_lastname,
             user_status=self.user_status,

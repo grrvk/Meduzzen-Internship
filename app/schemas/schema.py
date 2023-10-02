@@ -7,6 +7,7 @@ from pydantic import BaseModel, field_validator
 class UserSchema(BaseModel):
     id: int
     user_email: str
+    hashed_password: str
     user_firstname: str
     user_lastname: str
     user_status: bool
@@ -64,3 +65,12 @@ class UserDetailResponse(BaseModel):
     is_superuser: bool
     created_at: datetime.datetime
     updated_at: datetime.datetime
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    username: str | None = None

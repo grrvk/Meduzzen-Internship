@@ -1,5 +1,6 @@
 from typing import AsyncGenerator
 
+from fastapi import Depends
 from redis import asyncio as aioredis, Redis
 
 from sqlalchemy import MetaData
@@ -32,3 +33,5 @@ async def get_redis_db() -> Redis:
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with SessionLocal() as session:
         yield session
+
+

@@ -1,11 +1,11 @@
 from fastapi import HTTPException
 
-from app.schemas.schema import UserSignUpRequest, UserUpdateRequest
-from app.services.hasher import hasher
-from app.utils.repository import AbstractRepository, SQLAlchemyRepository
+from app.schemas.schema import UserSignUpRequest, UserUpdateRequest, UserSignInRequest
+from app.utils.repository import AbstractRepository
+from app.auth.jwt import get_password_hash, verify_password
 
 
-class UsersService:
+class UserService:
     def __init__(self, users_repo: AbstractRepository):
         self.users_repo: AbstractRepository = users_repo()
 
@@ -13,9 +13,25 @@ class UsersService:
         if await self.users_repo.get_one_by(**dict(user_email=user.user_email)):
             raise HTTPException(status_code=400, detail="user with such email already exists")
         users_dict = user.model_dump()
-        users_dict["hashed_password"] = hasher.get_password_hash(users_dict["hashed_password"])
+        hashed = get_password_hash(users_dict["hashed_password"].lower())
+        users_dict["hashed_password"] = hashed
         user_id = await self.users_repo.create_one(users_dict)
         return user_id
+
+
+    async def authenticate_user(self, email, password):
+        user_db = await self.users_repo.get_one_by(**dict(user_email=email))
+        if user_db is None:
+            raise HTTPException(
+                status_code=400,
+                detail="Incorrect email or password"
+            )
+        if not verify_password(password.lower(), user_db.hashed_password):
+            raise HTTPException(
+                status_code=400,
+                detail="Incorrect email or password"
+            )
+        return user_db
 
     async def get_all_users(self):
         users = await self.users_repo.get_all()
