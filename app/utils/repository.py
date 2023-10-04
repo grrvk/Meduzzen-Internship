@@ -48,7 +48,7 @@ class SQLAlchemyRepository(AbstractRepository):
     async def get_one_by(self, **filter_by):
         async with SessionLocal() as session:
             try:
-                stmt = select(self.model).filter_by(**filter_by)
+                stmt = select(self.model).filter_by(**dict(filter_by))
                 res = await session.execute(stmt)
                 res = res.scalar_one().to_read_model()
                 return res

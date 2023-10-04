@@ -10,7 +10,7 @@ class UsersService:
         self.users_repo: AbstractRepository = users_repo()
 
     async def add_user(self, user: UserSignUpRequest):
-        if await self.users_repo.get_one_by(**dict(user_email=user.user_email)):
+        if await self.users_repo.get_one_by(user_email=user.user_email):
             raise HTTPException(status_code=400, detail="user with such email already exists")
         users_dict = user.model_dump()
         users_dict["hashed_password"] = hasher.get_password_hash(users_dict["hashed_password"])
@@ -22,13 +22,13 @@ class UsersService:
         return users
 
     async def get_user_by_email(self, user_email: str):
-        user = await self.users_repo.get_one_by(**dict(user_email=user_email))
+        user = await self.users_repo.get_one_by(user_email=user_email)
         if not user:
             raise HTTPException(status_code=400, detail="no user with such id")
         return user
 
     async def get_user_by_id(self, user_id: int):
-        user = await self.users_repo.get_one_by(**dict(id=user_id))
+        user = await self.users_repo.get_one_by(id=user_id)
         if not user:
             raise HTTPException(status_code=400, detail="no user with such id")
         return user
