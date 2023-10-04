@@ -40,7 +40,7 @@ class UserService:
     async def get_user_by_email(self, user_email: str):
         user = await self.users_repo.get_one_by(**dict(user_email=user_email))
         if not user:
-            raise HTTPException(status_code=400, detail="no user with such id")
+            raise HTTPException(status_code=400, detail="no user with such email")
         return user
 
     async def get_user_by_id(self, user_id: int):

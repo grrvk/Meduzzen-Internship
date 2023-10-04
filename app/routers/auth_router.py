@@ -1,11 +1,7 @@
-from fastapi.security import OAuth2PasswordRequestForm
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends
 from typing import Annotated
-
-from app.auth.dependencies import get_current_user
-from app.auth.utils_auth import VerifyToken
-from app.models.model import User
-from app.schemas.schema import Token
+from app.auth.utils_auth import check_token, get_user_by_payload
+from app.schemas.schema import Token, UserSignInRequest
 from app.services.dependencies import users_service
 from app.services.users import UserService
 from app.auth.jwt import create_access_token
@@ -18,9 +14,9 @@ router = APIRouter()
 @router.post("/token", response_model=Token)
 async def login(
         user_service: Annotated[UserService, Depends(users_service)],
-        form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+        user: UserSignInRequest,
 ):
-    user_db = await user_service.authenticate_user(form_data.username, form_data.password)
+    user_db = await user_service.authenticate_user(user.user_email, user.hashed_password)
     access_token = create_access_token(
         data={"sub": user_db.user_email}
     )
@@ -30,25 +26,18 @@ async def login(
     }
 
 
-@router.get('/me')
+@router.get("/me")
 async def get_me(
-        user: Annotated[User, Depends(get_current_user)]):
-    return user
-
-
-@router.get("/me/auth0")
-async def get_me(
-        response: Response,
-        token: Annotated[str, Depends(token_auth_scheme)]
+        payload: Annotated[dict, Depends(check_token)],
+        user_service: Annotated[UserService, Depends(users_service)]
 ):
-    result = VerifyToken(token.credentials).verify()
-    if result.get("status"):
-        response.status_code = status.HTTP_400_BAD_REQUEST
-        return result
+    user_id = await get_user_by_payload(payload, user_service)
+    return {
+        "status_code": 200,
+        "data": user_id,
+        "details": None
+    }
 
-    return result
 
 
-@router.get('/private')
-async def get_private():
-    pass
+

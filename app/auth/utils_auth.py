@@ -1,100 +1,72 @@
-import os
+import secrets
 import jwt
-from configparser import ConfigParser
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+import os
+from jose import jwt, JWTError
+from fastapi import Depends, HTTPException
+
+from app.auth.auth0 import VerifyToken
+from app.schemas.schema import UserSignUpRequest
+from app.services.users import UserService
+
+ALGORITHM = os.environ['ALGORITHM']
+JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']
+AUTH0_DOMAIN = os.environ['DOMAIN']
+AUTH0_AUDIENCE = os.environ['API_AUDIENCE']
+AUTH0_ALG = os.environ['AUTH0_ALGORITHM']
+ISSUER = os.environ['ISSUER']
+
+security = HTTPBearer()
 
 
-def set_up():
-    """Sets up configuration for the app"""
-
-    env = os.getenv("ENV", ".config")
-
-    if env == ".env":
-        config = ConfigParser()
-        config.read(".config")
-        config = config["AUTH0"]
-    else:
-        config = {
-            "DOMAIN": os.getenv("DOMAIN", "your.domain.com"),
-            "API_AUDIENCE": os.getenv("API_AUDIENCE", "your.audience.com"),
-            "ISSUER": os.getenv("ISSUER", "https://your.domain.com/"),
-            "ALGORITHMS": os.getenv("ALGORITHMS", "RS256"),
-        }
-    return config
+def auth0_verification(credentials: str):
+    payload = VerifyToken(credentials).verify()
+    if payload.get("status"):
+        return None
+    return payload
 
 
-class VerifyToken():
-    """Does all the token verification using PyJWT"""
+def jwt_secret_verification(credentials: str):
+    try:
+        payload = jwt.decode(credentials, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        return payload
+    except JWTError:
+        return None
 
-    def __init__(self, token, permissions=None, scopes=None):
-        self.token = token
-        self.permissions = permissions
-        self.scopes = scopes
-        self.config = set_up()
 
-        # This gets the JWKS from a given URL and does processing so you can use any of
-        # the keys available
-        jwks_url = f'https://{self.config["DOMAIN"]}/.well-known/jwks.json'
-        self.jwks_client = jwt.PyJWKClient(jwks_url)
-
-    def verify(self):
-        # This gets the 'kid' from the passed token
-        try:
-            self.signing_key = self.jwks_client.get_signing_key_from_jwt(
-                self.token
-            ).key
-        except jwt.exceptions.PyJWKClientError as error:
-            return {"status": "error", "msg": error.__str__()}
-        except jwt.exceptions.DecodeError as error:
-            return {"status": "error", "msg": error.__str__()}
-
-        try:
-            payload = jwt.decode(
-                self.token,
-                self.signing_key,
-                algorithms=self.config["ALGORITHMS"],
-                audience=self.config["API_AUDIENCE"],
-                issuer=self.config["ISSUER"],
-            )
-        except Exception as e:
-            return {"status": "error", "message": str(e)}
-
-        if self.scopes:
-            result = self._check_claims(payload, 'scope', str, self.scopes.split(' '))
-            if result.get("error"):
-                return result
-
-        if self.permissions:
-            result = self._check_claims(payload, 'permissions', list, self.permissions)
-            if result.get("error"):
-                return result
-
+async def check_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    payload = auth0_verification(credentials.credentials)
+    if payload is not None:
+        return payload
+    payload = jwt_secret_verification(credentials.credentials)
+    if payload is not None:
         return payload
 
-    def _check_claims(self, payload, claim_name, claim_type, expected_value):
+    return None
 
-        instance_check = isinstance(payload[claim_name], claim_type)
-        result = {"status": "success", "status_code": 200}
 
-        payload_claim = payload[claim_name]
+async def get_user_by_payload(payload: dict, user_service: UserService):
+    credentials_exception = HTTPException(
+        status_code=401,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    if payload is None:
+        raise credentials_exception
 
-        if claim_name not in payload or not instance_check:
-            result["status"] = "error"
-            result["status_code"] = 400
-
-            result["code"] = f"missing_{claim_name}"
-            result["msg"] = f"No claim '{claim_name}' found in token."
-            return result
-
-        if claim_name == 'scope':
-            payload_claim = payload[claim_name].split(' ')
-
-        for value in expected_value:
-            if value not in payload_claim:
-                result["status"] = "error"
-                result["status_code"] = 403
-
-                result["code"] = f"insufficient_{claim_name}"
-                result["msg"] = (f"Insufficient {claim_name} ({value}). You don't have "
-                                  "access to this resource")
-                return result
-        return result
+    scope = payload.get("scope")
+    if scope == "openid profile email":
+        email = payload.get("user_email")
+        try:
+            user = await user_service.get_user_by_email(email)
+            return user.id
+        except:
+            added_user = UserSignUpRequest(user_email=email, hashed_password=secrets.token_urlsafe(15),
+                                           user_firstname="string", user_lastname="string"
+                                           )
+            user_id = await user_service.add_user(added_user)
+            return user_id
+    if scope == "secret jwt":
+        email = payload.get("sub")
+        user = await user_service.get_user_by_email(email)
+        return user.id

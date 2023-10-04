@@ -10,10 +10,10 @@ class UserSchema(BaseModel):
     hashed_password: str
     user_firstname: str
     user_lastname: str
-    user_status: bool
-    user_city: str
-    user_phone: str
-    user_avatar: str
+    user_status: Optional[bool] = None
+    user_city: Optional[str] = None
+    user_phone: Optional[str] = None
+    user_avatar: Optional[str] = None
 
 
 class UserSignUpRequest(BaseModel):
