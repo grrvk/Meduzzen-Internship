@@ -45,29 +45,3 @@ async def check_token(credentials: HTTPAuthorizationCredentials = Depends(securi
 
     return None
 
-
-async def get_user_by_payload(payload: dict, user_service: UsersService):
-    credentials_exception = HTTPException(
-        status_code=401,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    if payload is None:
-        raise credentials_exception
-
-    scope = payload.get("scope")
-    if scope == "openid profile email":
-        email = payload.get("user_email")
-        try:
-            user = await user_service.get_user_by_email(email)
-            return user.id
-        except:
-            added_user = UserSignUpRequest(user_email=email, hashed_password=secrets.token_urlsafe(15),
-                                           user_firstname="string", user_lastname="string"
-                                           )
-            user_id = await user_service.add_user(added_user)
-            return user_id
-    if scope == "secret jwt":
-        email = payload.get("sub")
-        user = await user_service.get_user_by_email(email)
-        return user.id

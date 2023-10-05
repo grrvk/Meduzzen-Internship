@@ -3,7 +3,7 @@ from typing import Annotated
 
 from starlette import status
 
-from app.auth.utils_auth import check_token, get_user_by_payload
+from app.auth.utils_auth import check_token
 from app.schemas.response import Response
 from app.schemas.schema import Token, UserSignInRequest
 from app.services.auth import AuthService
