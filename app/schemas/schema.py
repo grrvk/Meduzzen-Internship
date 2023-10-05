@@ -29,10 +29,10 @@ class UserSignUpRequest(BaseModel):
     created_at: Optional[datetime.datetime] = None
 
     @field_validator('hashed_password')
-    def name_must_contain_space(cls, p):
+    def password_validation(cls, p):
         if not p:
             raise ValueError('Password cannot be blank')
-        return p.title()
+        return p
 
 
 class UserSignInRequest(BaseModel):
@@ -41,7 +41,6 @@ class UserSignInRequest(BaseModel):
 
 
 class UserUpdateRequest(BaseModel):
-    hashed_password: Optional[str] = None
     user_email: Optional[str] = None
     user_firstname: Optional[str] = None
     user_lastname: Optional[str] = None
