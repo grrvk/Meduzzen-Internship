@@ -5,7 +5,7 @@ from app.utils.repository import AbstractRepository
 from app.auth.jwt import get_password_hash, verify_password
 
 
-class UserService:
+class UsersService:
     def __init__(self, users_repo: AbstractRepository):
         self.users_repo: AbstractRepository = users_repo()
 
@@ -17,21 +17,6 @@ class UserService:
         users_dict["hashed_password"] = hashed
         user_id = await self.users_repo.create_one(users_dict)
         return user_id
-
-
-    async def authenticate_user(self, email, password):
-        user_db = await self.users_repo.get_one_by(**dict(user_email=email))
-        if user_db is None:
-            raise HTTPException(
-                status_code=400,
-                detail="Incorrect email or password"
-            )
-        if not verify_password(password.lower(), user_db.hashed_password):
-            raise HTTPException(
-                status_code=400,
-                detail="Incorrect email or password"
-            )
-        return user_db
 
     async def get_all_users(self):
         users = await self.users_repo.get_all()

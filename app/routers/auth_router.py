@@ -1,11 +1,17 @@
 from fastapi import APIRouter, Depends
 from typing import Annotated
+
+from starlette import status
+
 from app.auth.utils_auth import check_token, get_user_by_payload
+from app.schemas.response import Response
 from app.schemas.schema import Token, UserSignInRequest
-from app.services.dependencies import users_service
-from app.services.users import UserService
+from app.services.auth import AuthService
+from app.services.dependencies import users_service, authentication_service
 from app.auth.jwt import create_access_token
 from fastapi.security import HTTPBearer
+
+from app.services.users import UsersService
 
 token_auth_scheme = HTTPBearer()
 router = APIRouter()
@@ -13,10 +19,10 @@ router = APIRouter()
 
 @router.post("/token", response_model=Token)
 async def login(
-        user_service: Annotated[UserService, Depends(users_service)],
         user: UserSignInRequest,
+        auth_service: Annotated[AuthService, Depends(authentication_service)]
 ):
-    user_db = await user_service.authenticate_user(user.user_email, user.hashed_password)
+    user_db = await auth_service.authenticate_user(user.user_email, user.hashed_password)
     access_token = create_access_token(
         data={"sub": user_db.user_email}
     )
@@ -26,17 +32,19 @@ async def login(
     }
 
 
-@router.get("/me")
+@router.get("/me", response_model=Response[int])
 async def get_me(
         payload: Annotated[dict, Depends(check_token)],
-        user_service: Annotated[UserService, Depends(users_service)]
+        user_service: Annotated[UsersService, Depends(users_service)],
+        auth_service: Annotated[AuthService, Depends(authentication_service)]
+
 ):
-    user_id = await get_user_by_payload(payload, user_service)
-    return {
-        "status_code": 200,
-        "data": user_id,
-        "details": None
-    }
+    res = await auth_service.get_user_by_payload(payload)
+    return Response(
+        status_code=status.HTTP_200_OK,
+        detail="OK",
+        result=res
+    )
 
 
 
