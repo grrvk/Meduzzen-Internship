@@ -2,7 +2,7 @@ import secrets
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
-from app.auth.jwt import verify_password, get_password_hash
+from app.auth.jwt import verify_password, get_password_hash, create_access_token
 from app.schemas.schema import UserSignUpRequest
 from app.utils.repository import AbstractRepository
 
@@ -23,7 +23,12 @@ class AuthService:
                 status_code=400,
                 detail="Incorrect email or password"
             )
-        return user_db
+
+        access_token = create_access_token(
+            data={"sub": user_db.user_email}
+        )
+
+        return access_token
 
     async def get_user_by_payload(self, payload: dict):
         credentials_exception = HTTPException(

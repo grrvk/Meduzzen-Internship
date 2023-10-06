@@ -22,10 +22,7 @@ async def login(
         user: UserSignInRequest,
         auth_service: Annotated[AuthService, Depends(authentication_service)]
 ):
-    user_db = await auth_service.authenticate_user(user.user_email, user.hashed_password)
-    access_token = create_access_token(
-        data={"sub": user_db.user_email}
-    )
+    access_token = await auth_service.authenticate_user(user.user_email, user.hashed_password)
     return {
         "access_token": access_token,
         "token_type": "bearer"
