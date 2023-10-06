@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException
 from app.auth.jwt import verify_password, get_password_hash, create_access_token
-from app.schemas.schema import UserSignUpRequest
+from app.schemas.schema import UserSignUpRequest, Token
 from app.utils.repository import AbstractRepository
 
 
@@ -28,7 +28,7 @@ class AuthService:
             data={"sub": user_db.user_email}
         )
 
-        return access_token
+        return Token(access_token=access_token, token_type="Bearer")
 
     async def get_user_by_payload(self, payload: dict):
         credentials_exception = HTTPException(
