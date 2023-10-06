@@ -51,6 +51,8 @@ async def redis_check(db: Redis = Depends(get_redis_db)):
         }
 
 
+
+
 @router.get("/postgresql")
 async def db_check(session: AsyncSession = Depends(get_async_session)):
     try:
@@ -66,5 +68,3 @@ async def db_check(session: AsyncSession = Depends(get_async_session)):
             "error_message": str(e),
             "details": None
         }
-
-
