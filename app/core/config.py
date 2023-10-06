@@ -32,3 +32,12 @@ class RedisSettings(BaseSettings):
 
 
 redis_settings = RedisSettings()
+
+
+class Auth0Settings(BaseSettings):
+    domain: str = os.environ.get("DOMAIN")
+    api_audience: str = os.environ.get("API_AUDIENCE")
+    issuer: str = os.environ.get("ISSUER")
+
+
+auth0_settings = Auth0Settings()

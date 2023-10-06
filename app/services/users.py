@@ -1,8 +1,8 @@
 from fastapi import HTTPException
 
-from app.schemas.schema import UserSignUpRequest, UserUpdateRequest
-from app.services.hasher import hasher
-from app.utils.repository import AbstractRepository, SQLAlchemyRepository
+from app.schemas.schema import UserSignUpRequest, UserUpdateRequest, UserSignInRequest
+from app.utils.repository import AbstractRepository
+from app.auth.jwt import get_password_hash, verify_password
 
 
 class UsersService:
@@ -13,7 +13,8 @@ class UsersService:
         if await self.users_repo.get_one_by(user_email=user.user_email):
             raise HTTPException(status_code=400, detail="user with such email already exists")
         users_dict = user.model_dump()
-        users_dict["hashed_password"] = hasher.get_password_hash(users_dict["hashed_password"])
+        hashed = get_password_hash(users_dict["hashed_password"].lower())
+        users_dict["hashed_password"] = hashed
         user_id = await self.users_repo.create_one(users_dict)
         return user_id
 
@@ -24,7 +25,7 @@ class UsersService:
     async def get_user_by_email(self, user_email: str):
         user = await self.users_repo.get_one_by(user_email=user_email)
         if not user:
-            raise HTTPException(status_code=400, detail="no user with such id")
+            raise HTTPException(status_code=400, detail="no user with such email")
         return user
 
     async def get_user_by_id(self, user_id: int):

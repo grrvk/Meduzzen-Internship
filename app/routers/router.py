@@ -2,12 +2,12 @@ from redis import Redis
 from fastapi import APIRouter, Depends
 from functools import lru_cache
 from typing import Annotated
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.db.database import get_async_session, get_redis_db
+
 
 router = APIRouter()
 
@@ -49,8 +49,6 @@ async def redis_check(db: Redis = Depends(get_redis_db)):
             "error_message": str(e),
             "details": None
         }
-
-
 
 
 @router.get("/postgresql")

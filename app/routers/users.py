@@ -46,7 +46,7 @@ async def delete_user(
     res = await user_service.delete_user(user_id)
     return Response(
         status_code=status.HTTP_200_OK,
-        detail="deleted",
+        detail="OK",
         result=res
     )
 
@@ -66,6 +66,6 @@ async def read_item(
     res = await user_service.get_user_by_id(user_id)
     return Response(
             status_code=status.HTTP_200_OK,
-            detail="deleted",
+            detail="OK",
             result=res
         )

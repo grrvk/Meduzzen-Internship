@@ -1,11 +1,14 @@
 import sys
 from fastapi import FastAPI
 import uvicorn
+from fastapi.security import OAuth2PasswordBearer
 
 from app.models.model import Base
 
 sys.path.append(".")
-from app.routers import router, users
+from app.routers import router
+from app.routers import auth_router
+from app.routers import users
 from app.core.config import settings
 from app.db.database import async_engine
 
@@ -13,6 +16,8 @@ app = FastAPI()
 
 app.include_router(router.router)
 app.include_router(users.router)
+app.include_router(auth_router.router)
+
 
 #@app.on_event("startup")
 #async def init_tables():
