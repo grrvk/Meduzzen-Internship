@@ -12,7 +12,7 @@ class UsersService:
     async def add_user(self, user: UserSignUpRequest):
         if await self.users_repo.get_one_by(user_email=user.user_email):
             raise HTTPException(status_code=400, detail="user with such email already exists")
-        users_dict = user.model_dump()
+        users_dict = user.model_dump(exclude_unset=True)
         hashed = get_password_hash(users_dict["hashed_password"].lower())
         users_dict["hashed_password"] = hashed
         user_id = await self.users_repo.create_one(users_dict)
@@ -36,7 +36,10 @@ class UsersService:
 
     async def edit_user(self, id: int, data: UserUpdateRequest):
         await self.get_user_by_id(id)
-        users_dict = data.model_dump()
+        users_dict = data.model_dump(exclude_unset=True)
+        if users_dict.get("hashed_password"):
+            hashed = get_password_hash(users_dict["hashed_password"].lower())
+            users_dict["hashed_password"] = hashed
         user_id = await self.users_repo.update_one(id, users_dict)
         return user_id
 

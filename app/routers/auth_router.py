@@ -33,7 +33,7 @@ async def get_me(
     return Response(
         status_code=status.HTTP_200_OK,
         detail="OK",
-        result=res
+        result=res.id
     )
 
 
