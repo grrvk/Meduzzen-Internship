@@ -14,6 +14,7 @@ class UserSchema(BaseModel):
     user_city: Optional[str] = None
     user_phone: Optional[str] = None
     user_avatar: Optional[str] = None
+    is_superuser: Optional[bool] = False
 
 
 class UserSignUpRequest(BaseModel):
@@ -42,14 +43,15 @@ class UserSignInRequest(BaseModel):
 
 class UserUpdateRequest(BaseModel):
     user_email: Optional[str] = None
-    user_firstname: Optional[str] = None
-    user_lastname: Optional[str] = None
+    hashed_password: Optional[str] = None
     user_status: Optional[bool] = None
     user_city: Optional[str] = None
     user_phone: Optional[str] = None
     user_avatar: Optional[str] = None
     is_superuser: Optional[bool] = None
     updated_at: Optional[datetime.datetime] = None
+    user_firstname: Optional[str] = None
+    user_lastname: Optional[str] = None
 
 
 class UsersListResponse(BaseModel):
@@ -70,6 +72,3 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-
-class TokenData(BaseModel):
-    username: str | None = None
