@@ -51,8 +51,7 @@ class AuthService:
                 user_dict = added_user.model_dump()
                 user_dict["hashed_password"] = get_password_hash(user_dict["hashed_password"].lower())
                 user_id = await self.users_repo.create_one(user_dict)
-                user = await self.users_repo.get_one_by(id=user_id)
-                return user
+                return await self.users_repo.get_one_by(id=user_id)
             return user
         if scope == "secret jwt":
             email = payload.get("sub")
