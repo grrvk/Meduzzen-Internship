@@ -29,3 +29,23 @@ class UserPermissions:
         if current_user.is_superuser:
             return True
         raise self.permission_error
+
+
+class CompaniesPermissions:
+    def __init__(self):
+        self.permission_error = HTTPException(status_code=403, detail="Not enough permissions")
+
+    async def can_update_company(self, owner_id: int, current_user: User, company_payload: dict) -> bool:
+        if current_user.is_superuser:
+            return True
+        if current_user.id != owner_id:
+            raise self.permission_error
+        for key in company_payload.keys():
+            if key != "company_name" and key != "company_description":
+                raise self.permission_error
+        return True
+
+    async def can_delete_company(self, owner_id: int, current_user: User) -> bool:
+        if current_user.id == owner_id or current_user.is_superuser:
+            return True
+        raise self.permission_error

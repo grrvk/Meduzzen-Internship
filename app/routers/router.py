@@ -9,7 +9,7 @@ from app.core.config import Settings
 from app.db.database import get_async_session, get_redis_db
 
 
-router = APIRouter()
+router = APIRouter(tags=["default"])
 
 
 @router.get("/")

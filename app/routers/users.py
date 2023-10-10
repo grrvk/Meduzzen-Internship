@@ -10,7 +10,7 @@ from app.services.auth import AuthService
 from app.services.dependencies import users_service, authentication_service
 from app.services.users import UsersService
 
-router = APIRouter()
+router = APIRouter(tags=["users"])
 
 
 @router.post("/add_user", response_model=Response[int])

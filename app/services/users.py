@@ -39,7 +39,6 @@ class UsersService:
         return user
 
     async def edit_user(self, id: int, data: UserUpdateRequest, current_user: User):
-        await self.get_user_by_id(id)
         users_dict = data.model_dump(exclude_unset=True)
         await self.permission_service.can_update_user(id, current_user, users_dict)
         if users_dict.get("hashed_password"):
@@ -49,7 +48,6 @@ class UsersService:
         return user_id
 
     async def delete_user(self, id: int, current_user: User):
-        await self.get_user_by_id(id)
         await self.permission_service.can_delete_user(id, current_user)
         await self.users_repo.delete_one(id)
         return True
