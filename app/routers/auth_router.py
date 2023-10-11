@@ -12,7 +12,7 @@ from fastapi.security import HTTPBearer
 
 
 token_auth_scheme = HTTPBearer()
-router = APIRouter()
+router = APIRouter(tags=["auth"])
 
 
 @router.post("/token", response_model=Token)
