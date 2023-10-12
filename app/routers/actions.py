@@ -71,7 +71,7 @@ async def get_user_requests(
 
 
 @router.post("/companies/{company_id}/members", response_model=list[MemberListResponse])
-async def get_invitations_for_company(
+async def get_company_members(
         company_id: int,
         action_handler: Annotated[OwnerActionHandler, Depends(owner_actions_handler)],
         auth_service: Annotated[AuthService, Depends(authentication_service)],
