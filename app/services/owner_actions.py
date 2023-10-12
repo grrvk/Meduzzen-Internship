@@ -91,6 +91,45 @@ class OwnerActionsService:
         await self.members_repo.delete_one(member.id)
         return True
 
+    async def add_admin(self, action: OwnerActionCreate, current_user: User):
+        company = await self.validator.owner_action_validation(action)
+        await self.actions_permissions.is_user_owner(company, current_user)
+
+        member = await self.members_repo.get_one_by(user_id=action.user_id, company_id=company.id)
+        if not member:
+            raise HTTPException(status_code=400, detail="no such member in the company")
+
+        member_dict = member.model_dump()
+        if member_dict["role"] == "Admin":
+            raise HTTPException(status_code=400, detail="member is already admin")
+        member_dict["role"] = "Admin"
+        await self.requests_repo.update_one(member, member_dict)
+        return True
+
+    async def remove_admin(self, action: OwnerActionCreate, current_user: User):
+        company = await self.validator.owner_action_validation(action)
+        await self.actions_permissions.is_user_owner(company, current_user)
+
+        member = await self.members_repo.get_one_by(user_id=action.user_id, company_id=company.id)
+        if not member:
+            raise HTTPException(status_code=400, detail="no such member in the company")
+
+        member_dict = member.model_dump()
+        if member_dict["role"] != "Admin":
+            raise HTTPException(status_code=400, detail="member is not admin")
+        member_dict["role"] = "Member"
+        await self.requests_repo.update_one(member, member_dict)
+        return True
+
+    async def get_all_members(self, company_id: int, current_user: User):
+        company = await self.company_repo.get_one_by(id=company_id)
+        if not company:
+            raise HTTPException(status_code=400, detail="company with such id does not exists")
+
+        await self.actions_permissions.is_user_owner(company, current_user)
+        return await self.members_repo.get_all_by(company_id=company_id, role="member")
+
+
     async def get_all_invitations(self, company_id: int, current_user: User):
         company = await self.company_repo.get_one_by(id=company_id)
         if not company:
@@ -124,9 +163,17 @@ class OwnerActionHandler:
             return await self.action_service.deny_request(action, current_user)
         if action.action == "Delete_member":
             return await self.action_service.delete_member(action, current_user)
+        if action.action == "Add_admin":
+            return await self.action_service.add_admin(action, current_user)
+        if action.action == "Remove_admin":
+            return await self.action_service.remove_admin(action, current_user)
 
     async def get_all_invitations(self, company_id: int, current_user: User):
         return await self.action_service.get_all_invitations(company_id, current_user)
 
     async def get_all_requests(self, company_id: int, current_user: User):
         return await self.action_service.get_all_requests(company_id, current_user)
+
+    async def get_all_members(self, company_id: int, current_user: User):
+        return await self.action_service.get_all_members(company_id, current_user)
+

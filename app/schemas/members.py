@@ -14,3 +14,8 @@ class MemberCreate(BaseModel):
     user_id: int
     role: Literal['member', 'admin']
     company_id: int
+
+
+class MemberListResponse(BaseModel):
+    user_id: int
+
