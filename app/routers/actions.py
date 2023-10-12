@@ -81,6 +81,17 @@ async def get_invitations_for_company(
     return await action_handler.get_all_members(company_id, current_user)
 
 
+@router.post("/companies/{company_id}/admins", response_model=list[MemberListResponse])
+async def get_invitations_for_company(
+        company_id: int,
+        action_handler: Annotated[OwnerActionHandler, Depends(owner_actions_handler)],
+        auth_service: Annotated[AuthService, Depends(authentication_service)],
+        payload: Annotated[dict, Depends(check_token)],
+):
+    current_user = await auth_service.get_user_by_payload(payload)
+    return await action_handler.get_all_admins(company_id, current_user)
+
+
 @router.post("/invitations/{company_id}", response_model=list[InvitationListResponse])
 async def get_invitations_for_company(
         company_id: int,

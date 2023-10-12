@@ -15,7 +15,8 @@ class ActionSchema(BaseModel):
 class OwnerActionCreate(BaseModel):
     user_id: int
     company_id: int
-    action: Literal['Send_invitation', 'Cancel_invitation', 'Accept_request', 'Deny_request', 'Delete_member']
+    action: Literal['Send_invitation', 'Cancel_invitation', 'Accept_request', 'Deny_request', 'Delete_member',
+                    'Add_admin', 'Remove_admin']
 
 
 class UserActionCreate(BaseModel):
