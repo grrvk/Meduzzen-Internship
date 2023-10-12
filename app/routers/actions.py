@@ -6,6 +6,7 @@ from starlette import status
 from app.auth.utils_auth import check_token
 from app.schemas.actions import OwnerActionCreate, UserActionCreate
 from app.schemas.invitations import InvitationListResponse
+from app.schemas.members import MemberListResponse
 from app.schemas.requests import RequestListResponse
 from app.schemas.response import Response
 
@@ -18,7 +19,7 @@ router = APIRouter(tags=["actions"])
 
 
 @router.post("/owner-action", response_model=Response[int])
-async def create_action(
+async def create_owner_action(
         action: OwnerActionCreate,
         action_handler: Annotated[OwnerActionHandler, Depends(owner_actions_handler)],
         auth_service: Annotated[AuthService, Depends(authentication_service)],
@@ -34,7 +35,7 @@ async def create_action(
 
 
 @router.post("/user-action", response_model=Response[int])
-async def create_action(
+async def create_user_action(
         action: UserActionCreate,
         action_handler: Annotated[UserActionHandler, Depends(user_actions_handler)],
         auth_service: Annotated[AuthService, Depends(authentication_service)],
@@ -50,7 +51,7 @@ async def create_action(
 
 
 @router.post("/invitations", response_model=list[InvitationListResponse])
-async def create_action(
+async def get_user_invitations(
         action_handler: Annotated[UserActionHandler, Depends(user_actions_handler)],
         auth_service: Annotated[AuthService, Depends(authentication_service)],
         payload: Annotated[dict, Depends(check_token)],
@@ -60,7 +61,7 @@ async def create_action(
 
 
 @router.post("/requests", response_model=list[RequestListResponse])
-async def create_action(
+async def get_user_requests(
         action_handler: Annotated[UserActionHandler, Depends(user_actions_handler)],
         auth_service: Annotated[AuthService, Depends(authentication_service)],
         payload: Annotated[dict, Depends(check_token)],
@@ -70,7 +71,7 @@ async def create_action(
 
 
 @router.post("/invitations/{company_id}", response_model=list[InvitationListResponse])
-async def create_action(
+async def get_invitations_for_company(
         company_id: int,
         action_handler: Annotated[OwnerActionHandler, Depends(owner_actions_handler)],
         auth_service: Annotated[AuthService, Depends(authentication_service)],
@@ -82,7 +83,7 @@ async def create_action(
 
 
 @router.post("/requests/{company_id}", response_model=list[RequestListResponse])
-async def create_action(
+async def get_requests_for_company(
         company_id: int,
         action_handler: Annotated[OwnerActionHandler, Depends(owner_actions_handler)],
         auth_service: Annotated[AuthService, Depends(authentication_service)],
@@ -90,3 +91,6 @@ async def create_action(
 ):
     current_user = await auth_service.get_user_by_payload(payload)
     return await action_handler.get_all_requests(company_id, current_user)
+
+
+
