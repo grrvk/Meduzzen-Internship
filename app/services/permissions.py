@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 from fastapi.security import HTTPBearer
 
-from app.models.model import User
+from app.models.model import User, Company
 
 security = HTTPBearer()
 
@@ -49,3 +49,15 @@ class CompaniesPermissions:
         if current_user.id == owner_id or current_user.is_superuser:
             return True
         raise self.permission_error
+
+
+class ActionsPermissions:
+    def __init__(self):
+        self.permission_error = HTTPException(status_code=403, detail="Not enough permissions")
+
+    async def is_user_owner(self, company: Company, current_user: User) -> bool:
+        if current_user.id != company.owner_id:
+            raise self.permission_error
+        return True
+
+

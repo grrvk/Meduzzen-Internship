@@ -1,13 +1,10 @@
-import secrets
 import jwt
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import os
 from jose import jwt, JWTError
-from fastapi import Depends, HTTPException
+from fastapi import Depends
 
 from app.auth.auth0 import VerifyToken
-from app.schemas.schema import UserSignUpRequest
-from app.services.users import UsersService
 
 ALGORITHM = os.environ['ALGORITHM']
 JWT_SECRET_KEY = os.environ['JWT_SECRET_KEY']

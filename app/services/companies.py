@@ -1,5 +1,4 @@
 from fastapi import HTTPException
-
 from app.models.model import User
 from app.schemas.companies import CompanyCreateRequest, CompanyUpdateRequest
 from app.services.permissions import CompaniesPermissions
@@ -16,12 +15,10 @@ class CompaniesService:
             raise HTTPException(status_code=400, detail="company with such name already exists")
         company_dict = company.model_dump(exclude_unset=True)
         company_dict.update({"owner_id": current_user.id})
-        company_id = await self.companies_repo.create_one(company_dict)
-        return company_id
+        return await self.companies_repo.create_one(company_dict)
 
     async def get_all_companies(self):
-        companies = await self.companies_repo.get_all()
-        return companies
+        return await self.companies_repo.get_all()
 
     async def get_company_by_id(self, company_id: int):
         company = await self.companies_repo.get_one_by(id=company_id)
@@ -35,8 +32,7 @@ class CompaniesService:
             raise HTTPException(status_code=400, detail="no company with such id")
         company_dict = data.model_dump(exclude_unset=True)
         await self.permission_service.can_update_company(company.owner_id, current_user, company_dict)
-        company_id = await self.companies_repo.update_one(id, company_dict)
-        return company_id
+        return await self.companies_repo.update_one(id, company_dict)
 
     async def delete_company(self, id: int, current_user: User):
         company = await self.companies_repo.get_one_by(id=id)

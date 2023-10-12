@@ -1,7 +1,9 @@
 from app.repositories.users import UsersRepository
+from .owner_actions import OwnerActionHandler
 from .auth import AuthService
 from .companies import CompaniesService
 from .permissions import UserPermissions
+from .user_actions import UserActionHandler
 from .users import UsersService
 from app.repositories.auth import AuthRepository
 from ..repositories.companies import CompaniesRepository
@@ -21,3 +23,12 @@ def companies_service():
 
 def permissions_service():
     return UserPermissions()
+
+
+def owner_actions_handler():
+    return OwnerActionHandler()
+
+
+def user_actions_handler():
+    return UserActionHandler()
+
