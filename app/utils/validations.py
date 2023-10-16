@@ -26,8 +26,9 @@ class ActionsValidator:
         return company
 
     async def user_is_not_member(self, user_id: int, company_id: int):
-        if not await self.members_repo.get_one_by(user_id=user_id, company_id=company_id):
-            return True
-        raise HTTPException(status_code=400, detail="user is already a member")
+        if await self.members_repo.get_one_by(user_id=user_id, company_id=company_id):
+            raise HTTPException(status_code=400, detail="user is already a member")
+        return True
+
 
 
