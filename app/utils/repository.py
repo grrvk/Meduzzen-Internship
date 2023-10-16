@@ -59,8 +59,7 @@ class SQLAlchemyRepository(AbstractRepository):
         async with SessionLocal() as session:
             stmt = select(self.model).filter_by(**dict(filter_by))
             res = await session.execute(stmt)
-            res = [row[0].to_read_model() for row in res.all()]
-            return res
+            return [row.to_read_model() for row in res.scalars().all()]
 
     async def delete_one(self, id: int):
         async with SessionLocal() as session:

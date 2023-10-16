@@ -25,7 +25,7 @@ class OwnerActionsService:
         company = await self.validator.owner_action_validation(action)
         if action.user_id == current_user.id:
             raise HTTPException(status_code=400, detail="user is owner of a company")
-        await self.validator.user_is_not_member(current_user.id, company.id)
+        await self.validator.user_is_not_member(action.user_id, company.id)
 
         invitation = await self.invitations_repo.get_one_by(user_id=action.user_id, company_id=action.company_id,
                                                             is_accepted=None)
@@ -33,8 +33,7 @@ class OwnerActionsService:
             raise HTTPException(status_code=400, detail="user has already been invited")
 
         invitation_dict = {"sender_id": current_user.id, "user_id": action.user_id, "company_id": action.company_id}
-        invitation = await self.invitations_repo.create_one(invitation_dict)
-        return invitation
+        return await self.invitations_repo.create_one(invitation_dict)
 
     async def cancel_invite(self, action: OwnerActionCreate, current_user: User):
         company = await self.validator.owner_action_validation(action)
@@ -62,8 +61,7 @@ class OwnerActionsService:
         await self.requests_repo.update_one(request.id, request_dict)
 
         member_dict = {"user_id": action.user_id, "role": "member", "company_id": action.company_id}
-        member = await self.members_repo.create_one(member_dict)
-        return member
+        return await self.members_repo.create_one(member_dict)
 
     async def deny_request(self, action: OwnerActionCreate, current_user: User):
         company = await self.validator.owner_action_validation(action)
@@ -124,13 +122,13 @@ class OwnerActionHandler:
     async def handle_action(self, action: OwnerActionCreate, current_user: User):
         if action.action == "Send_invitation":
             return await self.action_service.send_invite(action, current_user)
-        if action.action == "Cancel_invitation":
+        elif action.action == "Cancel_invitation":
             return await self.action_service.cancel_invite(action, current_user)
-        if action.action == "Accept_request":
+        elif action.action == "Accept_request":
             return await self.action_service.accept_request(action, current_user)
-        if action.action == "Deny_request":
+        elif action.action == "Deny_request":
             return await self.action_service.deny_request(action, current_user)
-        if action.action == "Delete_member":
+        elif action.action == "Delete_member":
             return await self.action_service.delete_member(action, current_user)
 
     async def get_all_invitations(self, company_id: int, current_user: User):

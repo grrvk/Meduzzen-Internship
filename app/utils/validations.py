@@ -29,5 +29,9 @@ class ActionsValidator:
         if not await self.members_repo.get_one_by(user_id=user_id, company_id=company_id):
             return True
         raise HTTPException(status_code=400, detail="user is already a member")
+        if await self.members_repo.get_one_by(user_id=user_id, company_id=company_id):
+            raise HTTPException(status_code=400, detail="user is already a member")
+        return True
+
 
 
