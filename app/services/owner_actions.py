@@ -5,7 +5,7 @@ from app.repositories.invitations import InvitationsRepository
 from app.repositories.members import MembersRepository
 from app.repositories.requests import RequestsRepository
 from app.repositories.users import UsersRepository
-from app.schemas.actions import OwnerActionCreate, Actions, OwnerActions
+from app.schemas.actions import OwnerActionCreate, OwnerActions
 from app.services.permissions import ActionsPermissions
 from app.utils.repository import AbstractRepository
 from app.utils.validations import ActionsValidator
@@ -89,6 +89,36 @@ class OwnerActionsService:
         await self.members_repo.delete_one(member.id)
         return True
 
+    async def add_admin(self, action: OwnerActionCreate, current_user: User):
+        company = await self.validator.owner_action_validation(action)
+        await self.actions_permissions.is_user_owner(company, current_user)
+
+        member = await self.members_repo.get_one_by(user_id=action.user_id, company_id=company.id)
+        if not member:
+            raise HTTPException(status_code=400, detail="no such member in the company")
+
+        member_dict = member.model_dump()
+        if member_dict["role"] == "admin":
+            raise HTTPException(status_code=400, detail="member is already admin")
+        member_dict["role"] = "admin"
+        await self.members_repo.update_one(member.id, member_dict)
+        return True
+
+    async def remove_admin(self, action: OwnerActionCreate, current_user: User):
+        company = await self.validator.owner_action_validation(action)
+        await self.actions_permissions.is_user_owner(company, current_user)
+
+        member = await self.members_repo.get_one_by(user_id=action.user_id, company_id=company.id)
+        if not member:
+            raise HTTPException(status_code=400, detail="no such member in the company")
+
+        member_dict = member.model_dump()
+        if member_dict["role"] != "admin":
+            raise HTTPException(status_code=400, detail="member is not admin")
+        member_dict["role"] = "member"
+        await self.members_repo.update_one(member.id, member_dict)
+        return True
+
     async def get_all_members(self, company_id: int, current_user: User):
         company = await self.company_repo.get_one_by(id=company_id)
         if not company:
@@ -96,6 +126,14 @@ class OwnerActionsService:
 
         await self.actions_permissions.is_user_owner(company, current_user)
         return await self.members_repo.get_all_by(company_id=company_id, role="member")
+
+    async def get_all_admins(self, company_id: int, current_user: User):
+        company = await self.company_repo.get_one_by(id=company_id)
+        if not company:
+            raise HTTPException(status_code=400, detail="company with such id does not exists")
+
+        await self.actions_permissions.is_user_owner(company, current_user)
+        return await self.members_repo.get_all_by(company_id=company_id, role="admin")
 
     async def get_all_invitations(self, company_id: int, current_user: User):
         company = await self.company_repo.get_one_by(id=company_id)
@@ -139,3 +177,6 @@ class OwnerActionHandler:
 
     async def get_all_members(self, company_id: int, current_user: User):
         return await self.action_service.get_all_members(company_id, current_user)
+
+    async def get_all_admins(self, company_id: int, current_user: User):
+        return await self.action_service.get_all_admins(company_id, current_user)
