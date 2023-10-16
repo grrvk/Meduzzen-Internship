@@ -33,8 +33,7 @@ class UserActionsService:
         await self.invitations_repo.update_one(invitation.id, invitation_dict)
 
         member_dict = {"user_id": current_user.id, "role": "member", "company_id": action.company_id}
-        member = await self.members_repo.create_one(member_dict)
-        return member
+        return await self.members_repo.create_one(member_dict)
 
     async def deny_invite(self, action: UserActionCreate, current_user: User):
         await self.validator.user_action_validation(action)
@@ -62,8 +61,7 @@ class UserActionsService:
             raise HTTPException(status_code=400, detail="request has already been sent")
 
         request_dict = {"sender_id": current_user.id, "company_id": action.company_id}
-        request = await self.requests_repo.create_one(request_dict)
-        return request
+        return await self.requests_repo.create_one(request_dict)
 
     async def cancel_request(self, action: UserActionCreate, current_user: User):
         await self.validator.user_action_validation(action)
@@ -101,13 +99,13 @@ class UserActionHandler:
     async def handle_action(self, action: UserActionCreate, current_user: User):
         if action.action == "Send_request":
             return await self.action_service.send_request(action, current_user)
-        if action.action == "Cancel_request":
+        elif action.action == "Cancel_request":
             return await self.action_service.cancel_request(action, current_user)
-        if action.action == "Accept_invitation":
+        elif action.action == "Accept_invitation":
             return await self.action_service.accept_invite(action, current_user)
-        if action.action == "Deny_invitation":
+        elif action.action == "Deny_invitation":
             return await self.action_service.deny_invite(action, current_user)
-        if action.action == "Leave_company":
+        elif action.action == "Leave_company":
             return await self.action_service.leave_company(action, current_user)
 
     async def get_all_invitations(self, current_user: User):
