@@ -33,7 +33,6 @@ def jwt_secret_verification(credentials: str):
 
 async def check_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     payload = auth0_verification(credentials.credentials)
-    print(payload)
     if payload is not None:
         return payload
     payload = jwt_secret_verification(credentials.credentials)
