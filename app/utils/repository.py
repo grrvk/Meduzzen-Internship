@@ -55,6 +55,12 @@ class SQLAlchemyRepository(AbstractRepository):
             except SQLAlchemyError as e:
                 return None
 
+    async def get_all_by(self, **filter_by):
+        async with SessionLocal() as session:
+            stmt = select(self.model).filter_by(**dict(filter_by))
+            res = await session.execute(stmt)
+            return [row.to_read_model() for row in res.scalars().all()]
+
     async def delete_one(self, id: int):
         async with SessionLocal() as session:
             stmt = delete(self.model).filter_by(id=id)

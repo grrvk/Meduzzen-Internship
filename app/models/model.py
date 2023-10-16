@@ -1,11 +1,11 @@
 from datetime import datetime, timezone
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ForeignKey
 from app.db.database import Base
-import pytz
-from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
-
 from app.schemas.companies import CompanySchema
-from app.schemas.schema import UserSchema, UserSignInRequest
+from app.schemas.invitations import InvitationSchema
+from app.schemas.members import MemberSchema
+from app.schemas.requests import RequestSchema
+from app.schemas.schema import UserSchema
 
 
 class User(Base):
@@ -66,3 +66,61 @@ class Company(Base):
             company_avatar=self.company_avatar,
             is_visible=self.is_visible,
         )
+
+
+# action_id, user_id, company_id, action
+
+
+class Invitation(Base):
+    __tablename__ = "Invitation"
+
+    id = Column(Integer, primary_key=True)
+    sender_id = Column(Integer, ForeignKey("User.id"))
+    user_id = Column(Integer, ForeignKey("User.id"))
+    company_id = Column(Integer, ForeignKey("Company.id"))
+    is_accepted: bool = Column(Boolean, default=None)
+
+    def to_read_model(self) -> InvitationSchema:
+        return InvitationSchema(
+            id=self.id,
+            sender_id=self.sender_id,
+            user_id=self.user_id,
+            company_id=self.company_id,
+            is_accepted=self.is_accepted,
+        )
+
+
+class Request(Base):
+    __tablename__ = "Request"
+
+    id = Column(Integer, primary_key=True)
+    sender_id = Column(Integer, ForeignKey("User.id"))
+    company_id = Column(Integer, ForeignKey("Company.id"))
+    is_accepted: bool = Column(Boolean, default=None)
+
+    def to_read_model(self) -> RequestSchema:
+        return RequestSchema(
+            id=self.id,
+            sender_id=self.sender_id,
+            company_id=self.company_id,
+            is_accepted=self.is_accepted,
+        )
+
+
+class Member(Base):
+    __tablename__ = "Member"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("User.id"))
+    role = Column(String, nullable=False)
+    company_id = Column(Integer, ForeignKey("Company.id"))
+
+    def to_read_model(self) -> MemberSchema:
+        return MemberSchema(
+            id=self.id,
+            user_id=self.user_id,
+            role=self.role,
+            company_id=self.company_id,
+        )
+
+

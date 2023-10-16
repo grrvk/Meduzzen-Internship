@@ -1,5 +1,4 @@
 from fastapi import HTTPException
-
 from app.models.model import User
 from app.schemas.companies import CompanyCreateRequest, CompanyUpdateRequest
 from app.services.permissions import CompaniesPermissions
@@ -16,8 +15,7 @@ class CompaniesService:
             raise HTTPException(status_code=400, detail="company with such name already exists")
         company_dict = company.model_dump(exclude_unset=True)
         company_dict.update({"owner_id": current_user.id})
-        company_id = await self.companies_repo.create_one(company_dict)
-        return company_id
+        return await self.companies_repo.create_one(company_dict)
 
     async def get_all_companies(self):
         return await self.companies_repo.get_all()
