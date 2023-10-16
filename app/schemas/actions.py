@@ -15,6 +15,8 @@ class Actions(str, Enum):
     Deny_invitation = "Deny_invitation"
     Cancel_request = "Cancel_request"
     Leave_company = "Leave_company"
+    Add_admin = "Add_admin"
+    Remove_admin = "Remove_admin"
 
 
 class ActionSchema(BaseModel):
@@ -30,6 +32,8 @@ class OwnerActions(str, Enum):
     Accept_request = "Accept_request"
     Deny_request = "Deny_request"
     Delete_member = "Delete_member"
+    Add_admin = "Add_admin"
+    Remove_admin = "Remove_admin"
 
 
 class OwnerActionCreate(BaseModel):
