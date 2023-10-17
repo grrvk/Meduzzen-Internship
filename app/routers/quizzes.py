@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from typing import Annotated
 from starlette import status
 from app.auth.utils_auth import check_token
@@ -6,9 +6,11 @@ from app.schemas.answers import AnswerCreateRequest, AnswerUpdateRequest
 from app.schemas.questions import QuestionCreateRequest, QuestionUpdateRequest
 from app.schemas.quizzes import QuizCreateRequest, QuizUpdateRequest
 from app.schemas.response import Response
+from app.schemas.user_answer import UserAnswerSchema, UserAnswerListSchema
 from app.services.auth import AuthService
-from app.services.dependencies import authentication_service, quizzes_service
+from app.services.dependencies import authentication_service, quizzes_service, results_service
 from app.services.quizzes import QuizzesService
+from app.services.results import ResultsService
 
 router = APIRouter(tags=["quizzes"])
 
@@ -167,3 +169,6 @@ async def delete_answer(
         detail="deleted",
         result=res
     )
+
+
+

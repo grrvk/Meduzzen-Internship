@@ -40,10 +40,13 @@ class QuizzesService:
         quiz_data = {"quiz_name": quiz_dict.get("quiz_name"), "quiz_title": quiz_dict.get("quiz_title"),
                      "quiz_description": quiz_dict.get("quiz_description"), "created_by": current_user.id,
                      "updated_by": current_user.id, "company_id": quiz_dict.get("company_id")}
+        questions = quiz_dict.get("questions")
+
+        self.validator.question_dublicate_check(questions)
+        self.validator.answer_duplicate_check(questions)
 
         quiz_id = await self.quizzes_repo.create_one(quiz_data)
 
-        questions = quiz_dict.get("questions")
         for question in questions:
             question_data = {"quiz_id": quiz_id, "created_by": current_user.id, "updated_by": current_user.id,
                              "question_text": question.get("question_text"), "company_id": quiz_dict.get("company_id")}
@@ -87,6 +90,8 @@ class QuizzesService:
         await self.quizzes_permissions.has_user_permissions(company, current_user)
 
         question_dict = data.model_dump()
+        if await self.questions_repo.get_one_by(quiz_id=quiz_id, question_text=question_dict.get("question_text")):
+            raise HTTPException(status_code=400, detail=f"such question is already in quiz")
         self.validator.question_answer_addition_check(question_dict)
 
         question = {"question_text": question_dict.get("question_text"), "quiz_id": quiz_id,
@@ -125,6 +130,8 @@ class QuizzesService:
         await self.quizzes_permissions.has_user_permissions(company, current_user)
 
         answer_dict = data.model_dump()
+        if await self.answers_repo.get_one_by(question_id=question_id, answer_data=answer_dict.get("answer_data")):
+            raise HTTPException(status_code=400, detail=f"such answer is already in question")
         answer_dict.update({"question_id": question_id, "created_by": current_user.id, "updated_by": current_user.id})
         return await self.answers_repo.create_one(answer_dict)
 
