@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 
 from app.models.model import User
-from app.schemas.answers import AnswerCreateRequest
-from app.schemas.questions import QuestionCreateRequest
-from app.schemas.quizzes import QuizCreateRequest
+from app.schemas.answers import AnswerCreateRequest, AnswerUpdateRequest
+from app.schemas.questions import QuestionCreateRequest, QuestionUpdateRequest
+from app.schemas.quizzes import QuizCreateRequest, QuizUpdateRequest
 from app.services.permissions import QuizzesPermissions
 from app.utils.repository import AbstractRepository
 from app.utils.validations import QuizzesDataValidator
@@ -35,7 +35,7 @@ class QuizzesService:
         await self.quizzes_permissions.has_user_permissions(company, current_user)
 
         quiz_dict = quiz.model_dump()
-        await self.validator.question_addition_check(quiz_dict)
+        self.validator.quiz_question_addition_check(quiz_dict)
 
         quiz_data = {"quiz_name": quiz_dict.get("quiz_name"), "quiz_title": quiz_dict.get("quiz_title"),
                      "quiz_description": quiz_dict.get("quiz_description"), "created_by": current_user.id,
@@ -51,18 +51,102 @@ class QuizzesService:
 
             answers = question.get("answers")
             for answer in answers:
-                answer.update({"question_id": question_id})
+                answer.update({"question_id": question_id,  "created_by": current_user.id,
+                               "updated_by": current_user.id})
                 await self.answers_repo.create_one(answer)
 
         return quiz_id
 
     async def delete_quiz(self, quiz_id: int, current_user: User):
-        quiz_check = await self.quizzes_repo.get_one_by(id=quiz_id)
-        if not quiz_check:
+        quiz = await self.quizzes_repo.get_one_by(id=quiz_id)
+        if not quiz:
             raise HTTPException(status_code=400, detail=f"such quiz does not exists")
-        company = await self.validator.question_data_validation(quiz_check.company_id)
+        company = await self.validator.question_data_validation(quiz.company_id)
         await self.quizzes_permissions.has_user_permissions(company, current_user)
 
         await self.quizzes_repo.delete_one(quiz_id)
+        return True
 
+    async def edit_quiz(self, quiz_id: int, data: QuizUpdateRequest, current_user: User):
+        quiz = await self.quizzes_repo.get_one_by(id=quiz_id)
+        if not quiz:
+            raise HTTPException(status_code=400, detail=f"such quiz does not exists")
+        company = await self.companies_repo.get_one_by(id=quiz.company_id)
+        await self.quizzes_permissions.has_user_permissions(company, current_user)
+
+        quiz_dict = data.model_dump(exclude_unset=True)
+        quiz_dict.update({"updated_by": current_user.id})
+        await self.quizzes_repo.update_one(quiz_id, quiz_dict)
+        return True
+
+    async def add_question(self, quiz_id: int, data: QuestionCreateRequest, current_user: User):
+        quiz = await self.quizzes_repo.get_one_by(id=quiz_id)
+        if not quiz:
+            raise HTTPException(status_code=400, detail=f"such quiz does not exists")
+        company = await self.companies_repo.get_one_by(id=quiz.company_id)
+        await self.quizzes_permissions.has_user_permissions(company, current_user)
+
+        question_dict = data.model_dump()
+        self.validator.question_answer_addition_check(question_dict)
+
+        question = {"question_text": question_dict.get("question_text"), "quiz_id": quiz_id,
+                    "created_by": current_user.id, "updated_by": current_user.id, "company_id": quiz.company_id}
+        question_id = await self.questions_repo.create_one(question)
+
+        answers = question_dict.get("answers")
+        for answer in answers:
+            answer.update({"question_id": question_id, "created_by": current_user.id, "updated_by": current_user.id})
+            await self.answers_repo.create_one(answer)
+
+        return question_id
+
+    async def edit_question(self, quiz_id: int, question_id: int, data: QuestionUpdateRequest, current_user: User):
+        question = await self.validator.question_existence_check(quiz_id, question_id)
+        company = await self.companies_repo.get_one_by(id=question.company_id)
+        await self.quizzes_permissions.has_user_permissions(company, current_user)
+
+        question_dict = data.model_dump(exclude_unset=True)
+        question_dict.update({"updated_by": current_user.id})
+        await self.questions_repo.update_one(question_id, question_dict)
+        return True
+
+    async def delete_question(self, quiz_id: int, question_id: int, current_user: User):
+        question = await self.validator.question_existence_check(quiz_id, question_id)
+        company = await self.companies_repo.get_one_by(id=question.company_id)
+        await self.quizzes_permissions.has_user_permissions(company, current_user)
+        await self.validator.question_delete_check(quiz_id)
+
+        await self.questions_repo.delete_one(question_id)
+        return True
+
+    async def add_answer(self, quiz_id: int, question_id: int, data: AnswerCreateRequest, current_user: User):
+        question = await self.validator.question_existence_check(quiz_id, question_id)
+        company = await self.companies_repo.get_one_by(id=question.company_id)
+        await self.quizzes_permissions.has_user_permissions(company, current_user)
+
+        answer_dict = data.model_dump()
+        answer_dict.update({"question_id": question_id, "created_by": current_user.id, "updated_by": current_user.id})
+        return await self.answers_repo.create_one(answer_dict)
+
+    async def edit_answer(self, quiz_id: int, question_id: int, answer_id: int,
+                          data: AnswerUpdateRequest, current_user: User):
+        answer, question = await self.validator.answer_existence_check(quiz_id, question_id, answer_id)
+        company = await self.companies_repo.get_one_by(id=question.company_id)
+        await self.quizzes_permissions.has_user_permissions(company, current_user)
+
+        answer_dict = data.model_dump(exclude_unset=True)
+        if "is_correct" in answer_dict:
+            await self.validator.answer_edit_check(question_id, answer_dict.get("is_correct"))
+        answer_dict.update({"updated_by": current_user.id})
+        await self.answers_repo.update_one(answer_id, answer_dict)
+        return True
+
+    async def delete_answer(self, quiz_id: int, question_id: int, answer_id: int, current_user: User):
+        answer, question = await self.validator.answer_existence_check(quiz_id, question_id, answer_id)
+        company = await self.companies_repo.get_one_by(id=question.company_id)
+        await self.quizzes_permissions.has_user_permissions(company, current_user)
+
+        await self.validator.answer_delete_check(question_id)
+
+        await self.answers_repo.delete_one(answer_id)
         return True

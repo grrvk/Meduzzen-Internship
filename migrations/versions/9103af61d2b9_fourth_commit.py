@@ -1,8 +1,8 @@
 """fourth commit
 
-Revision ID: 932407c7edca
+Revision ID: 9103af61d2b9
 Revises: e3bd59265c7f
-Create Date: 2023-10-16 03:02:30.719354
+Create Date: 2023-10-17 13:38:32.702083
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '932407c7edca'
+revision: str = '9103af61d2b9'
 down_revision: Union[str, None] = 'e3bd59265c7f'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -53,7 +53,11 @@ def upgrade() -> None:
     sa.Column('answer_data', sa.String(), nullable=False),
     sa.Column('is_correct', sa.Boolean(), nullable=False),
     sa.Column('question_id', sa.Integer(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=True),
+    sa.Column('updated_by', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['User.id'], ),
     sa.ForeignKeyConstraint(['question_id'], ['Question.id'], ondelete='CASCADE'),
+    sa.ForeignKeyConstraint(['updated_by'], ['User.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###

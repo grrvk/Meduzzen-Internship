@@ -1,9 +1,9 @@
-import datetime
 from typing import Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel
 
-from app.schemas.answers import AnswerSchema, AnswerCreateRequest
+#from app.models.model import Answer
+from app.schemas.answers import AnswerCreateRequest, AnswerSchema, AnswerDetailsSchema
 
 
 class QuestionSchema(BaseModel):
@@ -13,9 +13,18 @@ class QuestionSchema(BaseModel):
     company_id: int
     created_by: int
     updated_by: int
-    #answers: list[AnswerCreateRequest]
+    answers: list[AnswerSchema]
+
+
+class QuestionDetailsSchema(BaseModel):
+    question_text: str
+    answers: list[AnswerDetailsSchema]
 
 
 class QuestionCreateRequest(BaseModel):
     question_text: str
     answers: list[AnswerCreateRequest]
+
+
+class QuestionUpdateRequest(BaseModel):
+    question_text: Optional[str] = None

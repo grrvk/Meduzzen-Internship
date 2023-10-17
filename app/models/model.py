@@ -140,9 +140,9 @@ class Quiz(Base):
     created_by = Column(Integer, ForeignKey("User.id"))
     updated_by = Column(Integer, ForeignKey("User.id"))
     company_id = Column(Integer, ForeignKey("Company.id"))
-    last_passed_at = Column(TIMESTAMP(timezone=True), default=datetime.now(timezone.utc))
+    last_passed_at = Column(TIMESTAMP(timezone=True), default=datetime.now(timezone.utc), nullable=True)
 
-    questions = relationship("Question", back_populates="quiz", cascade="all,delete")
+    questions = relationship("Question", back_populates="quiz", cascade="all,delete", lazy='selectin')
 
     def to_read_model(self) -> QuizSchema:
         return QuizSchema(
@@ -155,6 +155,7 @@ class Quiz(Base):
             updated_by=self.updated_by,
             company_id=self.company_id,
             last_passed_at=self.last_passed_at,
+            questions=[q.to_read_model() for q in self.questions],
         )
 
 
@@ -169,16 +170,17 @@ class Question(Base):
     updated_by = Column(Integer, ForeignKey("User.id"))
 
     quiz = relationship("Quiz", back_populates="questions", cascade="all,delete")
-    answers = relationship("Answer", backref="Question", cascade="all,delete")
+    answers = relationship("Answer", backref="Question", cascade="all,delete", lazy='selectin')
 
     def to_read_model(self) -> QuestionSchema:
         return QuestionSchema(
             id=self.id,
             question_text=self.question_text,
-            #quiz_id=self.quiz_id,
+            quiz_id=self.quiz_id,
             company_id=self.company_id,
             created_by=self.created_by,
             updated_by=self.updated_by,
+            answers=[a.to_read_model() for a in self.answers],
         )
 
 
@@ -189,6 +191,8 @@ class Answer(Base):
     answer_data = Column(String, nullable=False)
     is_correct: bool = Column(Boolean, default=False, nullable=False)
     question_id = Column(Integer, ForeignKey("Question.id", ondelete="CASCADE"))
+    created_by = Column(Integer, ForeignKey("User.id"))
+    updated_by = Column(Integer, ForeignKey("User.id"))
 
     question = relationship("Question", back_populates="answers")
 
@@ -197,6 +201,8 @@ class Answer(Base):
             id=self.id,
             answer_data=self.answer_data,
             is_correct=self.is_correct,
-            #question_id=self.question_id,
+            created_by=self.created_by,
+            updated_by=self.updated_by,
+            question_id=self.question_id,
         )
 
