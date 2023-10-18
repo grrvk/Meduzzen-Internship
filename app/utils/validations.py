@@ -1,5 +1,6 @@
 from app.models.model import Quiz
 from app.schemas.actions import OwnerActionCreate, UserActionCreate
+from app.schemas.user_answer import UserAnswerListSchema
 from app.utils.repository import AbstractRepository
 from fastapi import HTTPException
 
@@ -133,6 +134,13 @@ class ResultsDataValidator:
         self.quizzes_repo: AbstractRepository = quizzes_repo()
         self.questions_repo: AbstractRepository = questions_repo()
         self.answers_repo: AbstractRepository = answers_repo()
+
+    async def answers_number_validator(self, user_answers: UserAnswerListSchema, quiz: Quiz):
+        answers_questions_ids = set(answer.question_id for answer in user_answers.user_answers)
+        quiz_questions_ids = set(question.id for question in quiz.questions)
+        if answers_questions_ids != quiz_questions_ids:
+            raise HTTPException(status_code=400, detail="not all questions have been answered")
+        return True
 
     async def quiz_exist(self, company_id: int, quiz_id: int):
         quiz = await self.quizzes_repo.get_one_by(id=quiz_id, company_id=company_id)
