@@ -35,7 +35,8 @@ def quizzes_service():
 
 def results_service():
     return ResultsService(CompaniesRepository, QuizzesRepository, QuestionsRepository,
-                          AnswersRepository, ResultsRepository)
+                          AnswersRepository, ResultsRepository, MembersRepository,
+                          UsersRepository)
 
 def permissions_service():
     return UserPermissions()

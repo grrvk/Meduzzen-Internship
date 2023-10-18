@@ -9,8 +9,8 @@ class RedisService:
         await redis_client.expire(redis_key, 172800)
         return True
 
-    async def get_result_from_redis(self, redis_client: Redis, user_id: int, company_id: int,
-                                    quiz_id: int, question_id: int):
-        redis_key = f"answer:{user_id}:{company_id}:{quiz_id}:{question_id}"
-        return await redis_client.hgetall(redis_key)
+    async def get_result_from_redis(self, redis_client: Redis, key: str):
+        return await redis_client.hgetall(key)
+
+
 

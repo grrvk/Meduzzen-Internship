@@ -20,6 +20,15 @@ class AnswerDetailsSchema(BaseModel):
     updated_by: int
 
 
+class AnswerOutDetailsSchema(BaseModel):
+    answer_data: str
+    is_correct: bool
+
+
+class AnswerListSchema(BaseModel):
+    answers: list[AnswerOutDetailsSchema]
+
+
 class AnswerCreateRequest(BaseModel):
     answer_data: str
     is_correct: bool

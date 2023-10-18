@@ -26,7 +26,7 @@ redis_pool = None
 async def get_redis_db() -> Redis:
     global redis_pool
     if not redis_pool:
-        redis_pool = await aioredis.from_url(REDIS_URL)
+        redis_pool = await aioredis.from_url(REDIS_URL, decode_responses=True)
     return redis_pool
 
 
