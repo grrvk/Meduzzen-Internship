@@ -2,6 +2,7 @@ from fastapi import HTTPException
 from fastapi.security import HTTPBearer
 
 from app.models.model import User, Company
+from app.utils.repository import AbstractRepository
 
 security = HTTPBearer()
 
@@ -57,6 +58,20 @@ class ActionsPermissions:
 
     async def is_user_owner(self, company: Company, current_user: User) -> bool:
         if current_user.id != company.owner_id:
+            raise self.permission_error
+        return True
+
+
+class QuizzesPermissions:
+    def __init__(self, members_repo: AbstractRepository):
+        self.permission_error = HTTPException(status_code=403, detail="Not enough permissions")
+        self.members_repo: AbstractRepository = members_repo()
+
+    async def has_user_permissions(self, company: Company, current_user: User):
+        if current_user.id == company.owner_id:
+            return True
+        member = await self.members_repo.get_one_by(user_id=current_user.id, company_id=company.id)
+        if not member or member.role == "member":
             raise self.permission_error
         return True
 

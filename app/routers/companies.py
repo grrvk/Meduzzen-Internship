@@ -5,10 +5,12 @@ from starlette import status
 
 from app.auth.utils_auth import check_token
 from app.schemas.companies import CompanyCreateRequest, CompanyUpdateRequest, CompaniesListResponse, CompanySchema
+from app.schemas.quizzes import QuizDetailsSchema
 from app.schemas.response import Response
 from app.services.auth import AuthService
 from app.services.companies import CompaniesService
-from app.services.dependencies import authentication_service, companies_service
+from app.services.dependencies import authentication_service, companies_service, quizzes_service
+from app.services.quizzes import QuizzesService
 
 router = APIRouter(tags=["companies"])
 
@@ -80,4 +82,15 @@ async def read_item(
             detail="OK",
             result=res
         )
+
+
+@router.get("/companies/{company_id}/quizzes", response_model=list[QuizDetailsSchema])
+async def add_quiz(
+        company_id: int,
+        quiz_service: Annotated[QuizzesService, Depends(quizzes_service)],
+        auth_service: Annotated[AuthService, Depends(authentication_service)],
+        payload: Annotated[dict, Depends(check_token)],
+):
+    current_user = await auth_service.get_user_by_payload(payload)
+    return await quiz_service.get_all_quizzes(company_id, current_user)
 

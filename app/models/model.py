@@ -1,9 +1,14 @@
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ForeignKey
+from sqlalchemy.orm import relationship
+
 from app.db.database import Base
+from app.schemas.answers import AnswerSchema
 from app.schemas.companies import CompanySchema
 from app.schemas.invitations import InvitationSchema
 from app.schemas.members import MemberSchema
+from app.schemas.questions import QuestionSchema
+from app.schemas.quizzes import QuizSchema
 from app.schemas.requests import RequestSchema
 from app.schemas.schema import UserSchema
 
@@ -123,4 +128,81 @@ class Member(Base):
             company_id=self.company_id,
         )
 
+# quiz_id, quiz_name, quiz_title, quiz_description, quiz_frequency, quiz_company_id, created_by, updated_by
+class Quiz(Base):
+    __tablename__ = "Quiz"
+
+    id = Column(Integer, primary_key=True)
+    quiz_name = Column(String, nullable=False)
+    quiz_title = Column(String, nullable=False)
+    quiz_description = Column(String, nullable=False)
+    quiz_frequency = Column(Integer, nullable=True)
+    created_by = Column(Integer, ForeignKey("User.id"))
+    updated_by = Column(Integer, ForeignKey("User.id"))
+    company_id = Column(Integer, ForeignKey("Company.id"))
+    last_passed_at = Column(TIMESTAMP(timezone=True), default=datetime.now(timezone.utc), nullable=True)
+
+    questions = relationship("Question", back_populates="quiz", cascade="all,delete", lazy='selectin')
+
+    def to_read_model(self) -> QuizSchema:
+        return QuizSchema(
+            id=self.id,
+            quiz_name=self.quiz_name,
+            quiz_title=self.quiz_title,
+            quiz_description=self.quiz_description,
+            quiz_frequency=self.quiz_frequency,
+            created_by=self.created_by,
+            updated_by=self.updated_by,
+            company_id=self.company_id,
+            last_passed_at=self.last_passed_at,
+            questions=[q.to_read_model() for q in self.questions],
+        )
+
+
+class Question(Base):
+    __tablename__ = "Question"
+
+    id = Column(Integer, primary_key=True)
+    question_text = Column(String, nullable=False)
+    quiz_id = Column(Integer, ForeignKey("Quiz.id", ondelete="CASCADE"))
+    company_id = Column(Integer, ForeignKey("Company.id"))
+    created_by = Column(Integer, ForeignKey("User.id"))
+    updated_by = Column(Integer, ForeignKey("User.id"))
+
+    quiz = relationship("Quiz", back_populates="questions", cascade="all,delete")
+    answers = relationship("Answer", backref="Question", cascade="all,delete", lazy='selectin')
+
+    def to_read_model(self) -> QuestionSchema:
+        return QuestionSchema(
+            id=self.id,
+            question_text=self.question_text,
+            quiz_id=self.quiz_id,
+            company_id=self.company_id,
+            created_by=self.created_by,
+            updated_by=self.updated_by,
+            answers=[a.to_read_model() for a in self.answers],
+        )
+
+
+class Answer(Base):
+    __tablename__ = "Answer"
+
+    id = Column(Integer, primary_key=True)
+    answer_data = Column(String, nullable=False)
+    is_correct: bool = Column(Boolean, default=False, nullable=False)
+    question_id = Column(Integer, ForeignKey("Question.id", ondelete="CASCADE"))
+    created_by = Column(Integer, ForeignKey("User.id"))
+    updated_by = Column(Integer, ForeignKey("User.id"))
+
+    question = relationship("Question", back_populates="answers")
+
+    def to_read_model(self) -> AnswerSchema:
+        return AnswerSchema(
+            id=self.id,
+            answer_data=self.answer_data,
+            is_correct=self.is_correct,
+            created_by=self.created_by,
+            updated_by=self.updated_by,
+            question_id=self.question_id,
+        )
 

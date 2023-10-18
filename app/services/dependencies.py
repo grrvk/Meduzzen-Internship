@@ -3,10 +3,15 @@ from .owner_actions import OwnerActionHandler
 from .auth import AuthService
 from .companies import CompaniesService
 from .permissions import UserPermissions
+from .quizzes import QuizzesService
 from .user_actions import UserActionHandler
 from .users import UsersService
 from app.repositories.auth import AuthRepository
+from ..repositories.answers import AnswersRepository
 from ..repositories.companies import CompaniesRepository
+from ..repositories.members import MembersRepository
+from ..repositories.questions import QuestionsRepository
+from ..repositories.quizes import QuizzesRepository
 
 
 def users_service():
@@ -19,6 +24,11 @@ def authentication_service():
 
 def companies_service():
     return CompaniesService(CompaniesRepository)
+
+
+def quizzes_service():
+    return QuizzesService(CompaniesRepository, QuizzesRepository, QuestionsRepository,
+                          AnswersRepository, MembersRepository)
 
 
 def permissions_service():
