@@ -1,11 +1,14 @@
 import datetime
 
 from fastapi import HTTPException
+from redis import Redis
 
 from app.models.model import User
 from app.schemas.result import ResultCreateRequest
 from app.schemas.user_answer import UserAnswerSchema, UserAnswerListSchema
+from app.schemas.user_answer_redis import AnswerData
 from app.services.permissions import QuizzesPermissions
+from app.services.redis import RedisService
 from app.utils.repository import AbstractRepository
 from app.utils.validations import ResultsDataValidator
 
@@ -18,10 +21,14 @@ class ResultsService:
         self.questions_repo: AbstractRepository = questions_repo()
         self.answers_repo: AbstractRepository = answers_repo()
         self.results_repo: AbstractRepository = results_repo()
-        self.validator = ResultsDataValidator(companies_repo, quizzes_repo, questions_repo, answers_repo)
 
-    async def get_result(self, company_id: int, quiz_id: int, user_answers: UserAnswerListSchema, current_user: User):
+        self.validator = ResultsDataValidator(companies_repo, quizzes_repo, questions_repo, answers_repo)
+        self.redis_service = RedisService()
+
+    async def get_result(self, company_id: int, quiz_id: int, user_answers: UserAnswerListSchema, current_user: User,
+                         redis_client: Redis):
         quiz = await self.validator.quiz_exist(company_id, quiz_id)
+        await self.validator.answers_number_validator(user_answers, quiz)
         if quiz.last_passed_at is None or quiz.last_passed_at.weekday() != datetime.datetime.utcnow().weekday():
             quiz_dict = {"last_passed_at": datetime.datetime.utcnow(), "quiz_frequency": quiz.quiz_frequency + 1}
             await self.quizzes_repo.update_one(quiz_id, quiz_dict)
@@ -29,10 +36,15 @@ class ResultsService:
         correct_results = 0
         for answer in user_answers.user_answers:
             question = await self.questions_repo.get_one_by(id=answer.question_id, quiz_id=quiz.id)
-            if question:
-                check_answer = await self.answers_repo.get_one_by(question_id=question.id, answer_data=answer.answer_data)
-                if check_answer and check_answer.is_correct:
-                    correct_results += 1
+            check_answer = await self.answers_repo.get_one_by(question_id=question.id, answer_data=answer.answer_data)
+            is_answer_correct = 0
+            if check_answer and check_answer.is_correct:
+                correct_results += 1
+                is_answer_correct = 1
+            redis_answer_data = AnswerData(user_id=current_user.id, company_id=company_id, quiz_id=quiz_id,
+                                           question_id=question.id, answer_data=answer.answer_data,
+                                           is_correct=is_answer_correct)
+            await self.redis_service.save_result_to_redis(redis_client, redis_answer_data)
 
         result = await self.results_repo.get_one_by(user_id=current_user.id, company_id=company_id, quiz_id=quiz_id)
         result_dict = {"result_right_count": correct_results, "result_total_count": len(quiz.questions)}
