@@ -7,7 +7,9 @@ from fastapi import HTTPException
 from redis import Redis
 
 from app.models.model import User
-from app.schemas.result import ResultCreateRequest
+from app.schemas.quizzes import QuizDateRequest
+from app.schemas.result import ResultCreateRequest, AverageResultListDetail, CompanyAverageResultForUserListDetail, \
+    UserAverageResultDateListDetail, UserPassingDateListDetail
 from app.schemas.user_answer import UserAnswerSchema, UserAnswerListSchema
 from app.schemas.user_answer_redis import AnswerData, AnswerDataDetail
 from app.services.permissions import QuizzesPermissions, ResultsPermissions
@@ -25,6 +27,8 @@ class ResultsService:
         self.questions_repo: AbstractRepository = questions_repo()
         self.answers_repo: AbstractRepository = answers_repo()
         self.results_repo: AbstractRepository = results_repo()
+        self.members_repo: AbstractRepository = members_repo()
+        self.companies_repo: AbstractRepository = companies_repo()
 
         self.validator = ResultsDataValidator(companies_repo, quizzes_repo, questions_repo, answers_repo,
                                               members_repo, users_repo)
@@ -62,28 +66,98 @@ class ResultsService:
         return await self.results_repo.create_one(result_dict)
 
     async def get_average_in_company(self, company_id: int, current_user: User):
-        results = await self.results_repo.get_all_by(company_id=company_id, user_id=current_user.id)
+        quizzes = await self.quizzes_repo.get_all_by(company_id=company_id)
         right_answers_count = 0
         total_answers_count = 0
-        for result in results:
-            right_answers_count += result.result_right_count
-            total_answers_count += result.result_total_count
+        for quiz in quizzes:
+            results = await self.results_repo.get_one_by(quiz_id=quiz.id, user_id=current_user.id)
+            if results:
+                for result in results:
+                    right_answers_count += result.result_right_count
+                    total_answers_count += result.result_total_count
+            else:
+                total_answers_count += len(quiz.questions)
 
         if total_answers_count == 0:
             return 0
         return round(float(right_answers_count / total_answers_count), 4)
 
     async def get_average_total(self, current_user: User):
-        results = await self.results_repo.get_all_by(user_id=current_user.id)
+        quizzes = await self.quizzes_repo.get_all()
         right_answers_count = 0
         total_answers_count = 0
-        for result in results:
-            right_answers_count += result.result_right_count
-            total_answers_count += result.result_total_count
+        for quiz in quizzes:
+            results = await self.results_repo.get_one_by(quiz_id=quiz.id, user_id=current_user.id)
+            if results:
+                right_answers_count += results.result_right_count
+                total_answers_count += results.result_total_count
+            else:
+                total_answers_count += len(quiz.questions)
 
         if total_answers_count == 0:
             return 0
         return round(float(right_answers_count / total_answers_count), 4)
+
+    async def get_average_results_list(self, current_user: User):
+        quizzes = await self.quizzes_repo.get_all()
+        results = []
+        for quiz in quizzes:
+            result = await self.results_repo.get_one_by(quiz_id=quiz.id, user_id=current_user.id)
+            print(result)
+            if result:
+                results.append(AverageResultListDetail(quiz_id=quiz.id, company_id=quiz.company_id,
+                               average_result=float(result.result_right_count/result.result_total_count)))
+            else:
+                results.append(AverageResultListDetail(quiz_id=quiz.id, company_id=quiz.company_id,
+                               average_result=0))
+        return results
+
+    async def get_quizzes_dates_list(self, current_user: User):
+        quizzes = await self.quizzes_repo.get_all()
+        quizzes_list = []
+        for quiz in quizzes:
+            result = await self.results_repo.get_one_by(quiz_id=quiz.id, user_id=current_user.id)
+            if result:
+                quizzes_list.append(QuizDateRequest(quiz_name=quiz.quiz_name, last_passed_at=result.created_at))
+            else:
+                quizzes_list.append(QuizDateRequest(quiz_name=quiz.quiz_name, last_passed_at=None))
+        return quizzes_list
+
+    async def get_all_members_averages(self, current_user: User):
+        companies = await self.companies_repo.get_all()
+        results_list = []
+        for company in companies:
+            if await self.permissions.user_owner_or_admin(company.id, current_user):
+                members = await self.members_repo.get_all_by(company_id=company.id)
+                for member in members:
+                    results = await self.results_repo.get_all_by(company_id=company.id, user_id=member.user_id)
+                    for result in results:
+                        results_list.append(CompanyAverageResultForUserListDetail(quiz_id=result.quiz_id,
+                                            company_id=result.company_id, user_id=member.user_id,
+                                        average_result=float(result.result_right_count / result.result_total_count)))
+        return results_list
+
+    async def get_member_averages(self, user_id: int, current_user: User):
+        results = await self.results_repo.get_all_by(user_id=user_id)
+        results_list = []
+        for result in results:
+            if await self.permissions.user_owner_or_admin(result.company_id, current_user):
+                results_list.append(UserAverageResultDateListDetail(quiz_id=result.quiz_id,
+                                    company_id=result.company_id, created_at=result.created_at,
+                                    average_result=float(result.result_right_count / result.result_total_count)))
+        return results_list
+
+    async def get_company_members_passing_dates(self, company_id: int, current_user: User):
+        company = await self.companies_repo.get_one_by(id=company_id)
+        await self.permissions.has_user_permissions(company.id, current_user)
+        members = await self.members_repo.get_all_by(company_id=company.id)
+        user_dates = []
+        for member in members:
+            results = await self.results_repo.get_all_by(company_id=company.id, user_id=member.user_id)
+            if results:
+                recent_date = max(result.created_at for result in results)
+                user_dates.append(UserPassingDateListDetail(user_id=member.user_id, last_passed_at=recent_date))
+        return user_dates
 
     async def get_results(self, current_user: User, redis_client: Redis):
         answers = []

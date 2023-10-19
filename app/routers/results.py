@@ -33,6 +33,21 @@ async def pass_quiz(
     )
 
 
+@router.get("/results", response_model=Response[int])
+async def get_average_total(
+        result_service: Annotated[ResultsService, Depends(results_service)],
+        auth_service: Annotated[AuthService, Depends(authentication_service)],
+        payload: Annotated[dict, Depends(check_token)],
+):
+    current_user = await auth_service.get_user_by_payload(payload)
+    res = await result_service.get_average_total(current_user)
+    return Response(
+        status_code=status.HTTP_200_OK,
+        detail="OK",
+        result=res
+    )
+
+
 @router.get("/results/{company_id}", response_model=Response[int])
 async def get_company_rating(
         company_id: int,
@@ -42,21 +57,6 @@ async def get_company_rating(
 ):
     current_user = await auth_service.get_user_by_payload(payload)
     res = await result_service.get_average_in_company(company_id, current_user)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        detail="OK",
-        result=res
-    )
-
-
-@router.get("/results", response_model=Response[int])
-async def get_average_total(
-        result_service: Annotated[ResultsService, Depends(results_service)],
-        auth_service: Annotated[AuthService, Depends(authentication_service)],
-        payload: Annotated[dict, Depends(check_token)],
-):
-    current_user = await auth_service.get_user_by_payload(payload)
-    res = await result_service.get_average_total(current_user)
     return Response(
         status_code=status.HTTP_200_OK,
         detail="OK",

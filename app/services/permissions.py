@@ -92,3 +92,14 @@ class ResultsPermissions:
         return True
 
 
+    async def user_owner_or_admin(self, company_id: int, current_user: User):
+        company = await self.companies_repo.get_one_by(id=company_id)
+        if current_user.id == company.owner_id:
+            return True
+        member = await self.members_repo.get_one_by(user_id=current_user.id, company_id=company.id)
+        if not member or member.role == "member":
+            return None
+        return True
+
+
+
