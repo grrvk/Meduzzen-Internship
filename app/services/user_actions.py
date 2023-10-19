@@ -5,7 +5,7 @@ from app.repositories.invitations import InvitationsRepository
 from app.repositories.members import MembersRepository
 from app.repositories.requests import RequestsRepository
 from app.repositories.users import UsersRepository
-from app.schemas.actions import UserActionCreate
+from app.schemas.actions import UserActionCreate, UserActions
 from app.services.permissions import ActionsPermissions
 from app.utils.repository import AbstractRepository
 from app.utils.validations import ActionsValidator
@@ -97,15 +97,15 @@ class UserActionHandler:
                                              UsersRepository, MembersRepository)
 
     async def handle_action(self, action: UserActionCreate, current_user: User):
-        if action.action == "Send_request":
+        if action.action is UserActions.Send_request:
             return await self.action_service.send_request(action, current_user)
-        elif action.action == "Cancel_request":
+        elif action.action is UserActions.Cancel_request:
             return await self.action_service.cancel_request(action, current_user)
-        elif action.action == "Accept_invitation":
+        elif action.action is UserActions.Accept_invitation:
             return await self.action_service.accept_invite(action, current_user)
-        elif action.action == "Deny_invitation":
+        elif action.action is UserActions.Deny_invitation:
             return await self.action_service.deny_invite(action, current_user)
-        elif action.action == "Leave_company":
+        elif action.action is UserActions.Leave_company:
             return await self.action_service.leave_company(action, current_user)
 
     async def get_all_invitations(self, current_user: User):
