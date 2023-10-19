@@ -32,9 +32,6 @@ class ResultsService:
         if quiz.last_passed_at is None or quiz.last_passed_at.weekday() != datetime.datetime.utcnow().weekday():
             quiz_dict = {"last_passed_at": datetime.datetime.utcnow(), "quiz_frequency": quiz.quiz_frequency + 1}
             await self.quizzes_repo.update_one(quiz_id, quiz_dict)
-        else:
-            quiz_dict = {"last_passed_at": datetime.datetime.utcnow(), "quiz_frequency": quiz.quiz_frequency + 1}
-            await self.quizzes_repo.update_one(quiz_id, quiz_dict)
 
         correct_results = 0
         for answer in user_answers.user_answers:
