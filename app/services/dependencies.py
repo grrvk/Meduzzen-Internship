@@ -1,4 +1,5 @@
 from app.repositories.users import UsersRepository
+from .notifications import NotificationsService
 from .owner_actions import OwnerActionHandler
 from .auth import AuthService
 from .companies import CompaniesService
@@ -11,6 +12,7 @@ from app.repositories.auth import AuthRepository
 from ..repositories.answers import AnswersRepository
 from ..repositories.companies import CompaniesRepository
 from ..repositories.members import MembersRepository
+from ..repositories.notifications import NotificationsRepository
 from ..repositories.questions import QuestionsRepository
 from ..repositories.quizes import QuizzesRepository
 from ..repositories.results import ResultsRepository
@@ -30,13 +32,17 @@ def companies_service():
 
 def quizzes_service():
     return QuizzesService(CompaniesRepository, QuizzesRepository, QuestionsRepository,
-                          AnswersRepository, MembersRepository)
+                          AnswersRepository, MembersRepository, NotificationsRepository)
 
 
 def results_service():
     return ResultsService(CompaniesRepository, QuizzesRepository, QuestionsRepository,
                           AnswersRepository, ResultsRepository, MembersRepository,
                           UsersRepository)
+
+
+def notifications_service():
+    return NotificationsService(MembersRepository, NotificationsRepository)
 
 def permissions_service():
     return UserPermissions()

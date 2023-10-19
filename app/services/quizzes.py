@@ -4,6 +4,7 @@ from app.models.model import User
 from app.schemas.answers import AnswerCreateRequest, AnswerUpdateRequest
 from app.schemas.questions import QuestionCreateRequest, QuestionUpdateRequest
 from app.schemas.quizzes import QuizCreateRequest, QuizUpdateRequest
+from app.services.notifications import NotificationsService
 from app.services.permissions import QuizzesPermissions
 from app.utils.repository import AbstractRepository
 from app.utils.validations import QuizzesDataValidator
@@ -12,12 +13,14 @@ from app.utils.validations import QuizzesDataValidator
 class QuizzesService:
     def __init__(self, companies_repo: AbstractRepository, quizzes_repo: AbstractRepository,
                  questions_repo: AbstractRepository, answers_repo: AbstractRepository,
-                 members_repo: AbstractRepository):
+                 members_repo: AbstractRepository, notifications_repo: AbstractRepository):
         self.quizzes_repo: AbstractRepository = quizzes_repo()
         self.questions_repo: AbstractRepository = questions_repo()
         self.answers_repo: AbstractRepository = answers_repo()
         self.companies_repo: AbstractRepository = companies_repo()
+        self.members_repo: AbstractRepository = members_repo()
 
+        self.notifications = NotificationsService(members_repo, notifications_repo)
         self.quizzes_permissions = QuizzesPermissions(members_repo)
         self.validator = QuizzesDataValidator(companies_repo, quizzes_repo, questions_repo, answers_repo)
 
@@ -46,6 +49,7 @@ class QuizzesService:
         self.validator.answer_duplicate_check(questions)
 
         quiz_id = await self.quizzes_repo.create_one(quiz_data)
+        await self.notifications.create_notification(quiz_id, int(quiz_dict.get("company_id")))
 
         for question in questions:
             question_data = {"quiz_id": quiz_id, "created_by": current_user.id, "updated_by": current_user.id,

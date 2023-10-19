@@ -134,7 +134,7 @@ class ResultsService:
         companies = await self.companies_repo.get_all()
         results_list = []
         for company in companies:
-            if await self.permissions.user_owner_or_admin(company.id, current_user):
+            if await self.permissions.user_owner_or_admin(company, current_user):
                 members = await self.members_repo.get_all_by(company_id=company.id)
                 for member in members:
                     results = await self.results_repo.get_all_by(company_id=company.id, user_id=member.user_id)
@@ -148,7 +148,8 @@ class ResultsService:
         results = await self.results_repo.get_all_by(user_id=user_id)
         results_list = []
         for result in results:
-            if await self.permissions.user_owner_or_admin(result.company_id, current_user):
+            company = await self.companies_repo.get_one_by(id=result.company_id)
+            if await self.permissions.user_owner_or_admin(company, current_user):
                 results_list.append(UserAverageResultDateListDetail(quiz_id=result.quiz_id,
                                     company_id=result.company_id, created_at=result.created_at,
                                     average_result=float(result.result_right_count / result.result_total_count)))
@@ -156,7 +157,7 @@ class ResultsService:
 
     async def get_company_members_passing_dates(self, company_id: int, current_user: User):
         company = await self.companies_repo.get_one_by(id=company_id)
-        await self.permissions.has_user_permissions(company.id, current_user)
+        await self.permissions.has_user_permissions(company, current_user)
         members = await self.members_repo.get_all_by(company_id=company.id)
         user_dates = []
         for member in members:

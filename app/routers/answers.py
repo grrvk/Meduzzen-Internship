@@ -25,7 +25,7 @@ async def get_answers(
     return await result_service.get_results(current_user, redis_client)
 
 
-@router.get("/answers/{user_id}", response_model=list[AnswerDataDetail])
+@router.get("/answers/users/{user_id}", response_model=list[AnswerDataDetail])
 async def get_answers_for_user(
         user_id: int,
         result_service: Annotated[ResultsService, Depends(results_service)],
@@ -37,7 +37,7 @@ async def get_answers_for_user(
     return await result_service.get_results_for_user(current_user, user_id, redis_client)
 
 
-@router.get("/{company_id}", response_model=list[AnswerData])
+@router.get("/answers/companies/{company_id}", response_model=list[AnswerData])
 async def get_answers_for_company(
         company_id: int,
         result_service: Annotated[ResultsService, Depends(results_service)],
