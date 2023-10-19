@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import APIRouter, Depends
 from typing import Annotated
 from starlette import status
@@ -7,8 +9,18 @@ from app.schemas.response import Response
 from app.services.auth import AuthService
 from app.services.dependencies import authentication_service, notifications_service
 from app.services.notifications import NotificationsService
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 router = APIRouter(tags=["notifications"])
+scheduler = AsyncIOScheduler()
+
+
+async def send_notifications():
+    notification_service = notifications_service()
+    await notification_service.send_notifications()
+
+
+scheduler.add_job(send_notifications, 'cron', hour=0)
 
 
 @router.get("/notifications", response_model=list[NotificationDetailSchema])

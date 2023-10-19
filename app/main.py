@@ -4,6 +4,7 @@ import uvicorn
 from fastapi.security import OAuth2PasswordBearer
 
 from app.models.model import Base
+from app.routers.notifications import scheduler
 
 sys.path.append(".")
 from app.routers import (router, companies, auth_router, users, actions, quizzes, results, answers, analytics,
@@ -25,10 +26,9 @@ app.include_router(analytics.router)
 app.include_router(notifications.router)
 
 
-#@app.on_event("startup")
-#async def init_tables():
-#    async with async_engine.begin() as conn:
-#        await conn.run_sync(Base.metadata.create_all)
+@app.on_event("startup")
+async def start_scheduler():
+    scheduler.start()
 
 
 if __name__ == "__main__":

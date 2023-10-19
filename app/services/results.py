@@ -40,7 +40,7 @@ class ResultsService:
         quiz = await self.validator.quiz_exist(company_id, quiz_id)
         await self.validator.answers_number_validator(user_answers, quiz)
         if quiz.last_passed_at is None or quiz.last_passed_at.weekday() != datetime.datetime.utcnow().weekday():
-            quiz_dict = {"last_passed_at": datetime.datetime.utcnow(), "quiz_frequency": quiz.quiz_frequency + 1}
+            quiz_dict = {"last_passed_at": datetime.datetime.utcnow()}
             await self.quizzes_repo.update_one(quiz_id, quiz_dict)
 
         correct_results = 0

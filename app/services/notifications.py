@@ -13,9 +13,12 @@ from app.utils.validations import QuizzesDataValidator
 
 
 class NotificationsService:
-    def __init__(self, members_repo: AbstractRepository, notifications_repo: AbstractRepository):
+    def __init__(self, members_repo: AbstractRepository, notifications_repo: AbstractRepository,
+                 quizzes_repo: AbstractRepository, results_repo: AbstractRepository):
         self.members_repo: AbstractRepository = members_repo()
         self.notifications_repo: AbstractRepository = notifications_repo()
+        self.quizzes_repo: AbstractRepository = quizzes_repo()
+        self.results_repo: AbstractRepository = results_repo()
 
         self.permissions = NotificationsPermissions(notifications_repo)
 
@@ -36,3 +39,15 @@ class NotificationsService:
     async def get_notification(self, current_user: User):
         return await self.notifications_repo.get_all_by(receiver_id=current_user.id, status="Sent")
 
+    async def send_notifications(self):
+        members = await self.members_repo.get_all()
+        for member in members:
+            quizzes = await self.quizzes_repo.get_all_by(company_id=member.company_id)
+            for quiz in quizzes:
+                result = await self.results_repo.get_one_by(user_id=member.user_id, quiz_id=quiz.id)
+                if result is None or (result.created_at-quiz.created_at)/quiz.quiz_frequency >= 1:
+                    data = NotificationCreateSchema(receiver_id=member.user_id, status="Sent",
+                                                    notification_data=f"Ypu can pass quiz {quiz.id}",
+                                                    created_at=datetime.datetime.utcnow())
+                    await self.notifications_repo.create_one(data.__dict__)
+        return True

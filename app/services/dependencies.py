@@ -32,7 +32,7 @@ def companies_service():
 
 def quizzes_service():
     return QuizzesService(CompaniesRepository, QuizzesRepository, QuestionsRepository,
-                          AnswersRepository, MembersRepository, NotificationsRepository)
+                          AnswersRepository, MembersRepository, NotificationsRepository, ResultsRepository)
 
 
 def results_service():
@@ -42,7 +42,8 @@ def results_service():
 
 
 def notifications_service():
-    return NotificationsService(MembersRepository, NotificationsRepository)
+    return NotificationsService(MembersRepository, NotificationsRepository, QuizzesRepository, ResultsRepository)
+
 
 def permissions_service():
     return UserPermissions()

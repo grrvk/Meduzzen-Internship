@@ -1,3 +1,5 @@
+import datetime
+
 from fastapi import HTTPException
 
 from app.models.model import User
@@ -13,14 +15,15 @@ from app.utils.validations import QuizzesDataValidator
 class QuizzesService:
     def __init__(self, companies_repo: AbstractRepository, quizzes_repo: AbstractRepository,
                  questions_repo: AbstractRepository, answers_repo: AbstractRepository,
-                 members_repo: AbstractRepository, notifications_repo: AbstractRepository):
+                 members_repo: AbstractRepository, notifications_repo: AbstractRepository,
+                 results_repo: AbstractRepository):
         self.quizzes_repo: AbstractRepository = quizzes_repo()
         self.questions_repo: AbstractRepository = questions_repo()
         self.answers_repo: AbstractRepository = answers_repo()
         self.companies_repo: AbstractRepository = companies_repo()
         self.members_repo: AbstractRepository = members_repo()
 
-        self.notifications = NotificationsService(members_repo, notifications_repo)
+        self.notifications = NotificationsService(members_repo, notifications_repo, quizzes_repo, results_repo)
         self.quizzes_permissions = QuizzesPermissions(members_repo)
         self.validator = QuizzesDataValidator(companies_repo, quizzes_repo, questions_repo, answers_repo)
 
@@ -41,8 +44,9 @@ class QuizzesService:
         self.validator.quiz_question_addition_check(quiz_dict)
 
         quiz_data = {"quiz_name": quiz_dict.get("quiz_name"), "quiz_title": quiz_dict.get("quiz_title"),
-                     "quiz_description": quiz_dict.get("quiz_description"), "created_by": current_user.id,
-                     "updated_by": current_user.id, "company_id": quiz_dict.get("company_id")}
+                     "quiz_description": quiz_dict.get("quiz_description"), "created_at": datetime.datetime.utcnow(),
+                     "created_by": current_user.id, "updated_by": current_user.id,
+                     "quiz_frequency": quiz_dict.get("quiz_frequency"), "company_id": quiz_dict.get("company_id")}
         questions = quiz_dict.get("questions")
 
         self.validator.question_dublicate_check(questions)
