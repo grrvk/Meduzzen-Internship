@@ -40,6 +40,7 @@ class ResultsService:
             is_answer_correct = 0
             if check_answer and check_answer.is_correct:
                 correct_results += 1
+                is_answer_correct = 1
             redis_answer_data = AnswerData(user_id=current_user.id, company_id=company_id, quiz_id=quiz_id,
                                            question_id=question.id, answer_data=answer.answer_data,
                                            is_correct=is_answer_correct)
