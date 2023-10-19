@@ -10,7 +10,5 @@ from app.main import app
 def test_client() -> Generator:
     yield TestClient(app)
 
-    # after test running, analogue tear down
-
 
 
