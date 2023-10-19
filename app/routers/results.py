@@ -53,7 +53,6 @@ async def get_company_rating(
 async def get_total_rating(
         result_service: Annotated[ResultsService, Depends(results_service)],
         auth_service: Annotated[AuthService, Depends(authentication_service)],
-        redis_client: Annotated[Redis, Depends(get_redis_db)],
         payload: Annotated[dict, Depends(check_token)],
 ):
     current_user = await auth_service.get_user_by_payload(payload)
