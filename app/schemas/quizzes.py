@@ -44,3 +44,8 @@ class QuizUpdateRequest(BaseModel):
     quiz_title: Optional[str] = None
     quiz_description: Optional[str] = None
 
+
+class QuizDateRequest(BaseModel):
+    quiz_name: str
+    last_passed_at: datetime.datetime | None
+

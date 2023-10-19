@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from app.models.model import Base
 
 sys.path.append(".")
-from app.routers import router, companies, auth_router, users, actions, quizzes, results, answers
+from app.routers import router, companies, auth_router, users, actions, quizzes, results, answers, analytics
 from app.core.config import settings
 from app.db.database import async_engine
 
@@ -20,6 +20,7 @@ app.include_router(actions.router)
 app.include_router(quizzes.router)
 app.include_router(results.router)
 app.include_router(answers.router)
+app.include_router(analytics.router)
 
 
 #@app.on_event("startup")

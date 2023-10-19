@@ -30,3 +30,28 @@ class ResultDetailSchema(BaseModel):
 
 class ResultListSchema(BaseModel):
     results: list[ResultDetailSchema]
+
+
+class AverageResultListDetail(BaseModel):
+    company_id: int
+    quiz_id: int
+    average_result: float
+
+
+class CompanyAverageResultForUserListDetail(BaseModel):
+    user_id: int
+    company_id: int
+    quiz_id: int
+    average_result: float
+
+
+class UserAverageResultDateListDetail(BaseModel):
+    company_id: int
+    quiz_id: int
+    average_result: int
+    created_at: datetime.datetime
+
+
+class UserPassingDateListDetail(BaseModel):
+    user_id: int
+    last_passed_at: datetime.datetime

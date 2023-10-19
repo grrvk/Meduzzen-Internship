@@ -5,7 +5,9 @@ from redis import Redis
 from starlette import status
 from app.auth.utils_auth import check_token
 from app.db.database import get_redis_db
+from app.schemas.quizzes import QuizDateRequest
 from app.schemas.response import Response
+from app.schemas.result import AverageResultListDetail
 from app.schemas.user_answer import UserAnswerListSchema
 from app.services.auth import AuthService
 from app.services.dependencies import authentication_service, results_service
@@ -33,7 +35,7 @@ async def pass_quiz(
     )
 
 
-@router.get("/results/{company_id}", response_model=Response[int])
+@router.get("/results", response_model=Response[int])
 async def get_average_total(
         result_service: Annotated[ResultsService, Depends(results_service)],
         auth_service: Annotated[AuthService, Depends(authentication_service)],
@@ -48,7 +50,7 @@ async def get_average_total(
     )
 
 
-@router.get("/results", response_model=Response[int])
+@router.get("/results/{company_id}", response_model=Response[int])
 async def get_company_rating(
         company_id: int,
         result_service: Annotated[ResultsService, Depends(results_service)],
