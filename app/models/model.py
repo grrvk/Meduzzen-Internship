@@ -10,6 +10,7 @@ from app.schemas.members import MemberSchema
 from app.schemas.questions import QuestionSchema
 from app.schemas.quizzes import QuizSchema
 from app.schemas.requests import RequestSchema
+from app.schemas.result import ResultSchema
 from app.schemas.schema import UserSchema
 
 
@@ -136,11 +137,11 @@ class Quiz(Base):
     quiz_name = Column(String, nullable=False)
     quiz_title = Column(String, nullable=False)
     quiz_description = Column(String, nullable=False)
-    quiz_frequency = Column(Integer, nullable=True)
+    quiz_frequency = Column(Integer, nullable=True, default=0)
     created_by = Column(Integer, ForeignKey("User.id"))
     updated_by = Column(Integer, ForeignKey("User.id"))
     company_id = Column(Integer, ForeignKey("Company.id"))
-    last_passed_at = Column(TIMESTAMP(timezone=True), default=datetime.now(timezone.utc), nullable=True)
+    last_passed_at = Column(TIMESTAMP(timezone=True))
 
     questions = relationship("Question", back_populates="quiz", cascade="all,delete", lazy='selectin')
 
@@ -194,8 +195,6 @@ class Answer(Base):
     created_by = Column(Integer, ForeignKey("User.id"))
     updated_by = Column(Integer, ForeignKey("User.id"))
 
-    question = relationship("Question", back_populates="answers")
-
     def to_read_model(self) -> AnswerSchema:
         return AnswerSchema(
             id=self.id,
@@ -205,4 +204,28 @@ class Answer(Base):
             updated_by=self.updated_by,
             question_id=self.question_id,
         )
+
+
+class Result(Base):
+    __tablename__ = "Result"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("User.id", ondelete="CASCADE"))
+    company_id = Column(Integer, ForeignKey("Company.id", ondelete="CASCADE"))
+    quiz_id = Column(Integer, ForeignKey("Quiz.id", ondelete="CASCADE"))
+    created_at = Column(TIMESTAMP(timezone=True), default=datetime.now(timezone.utc))
+    result_right_count = Column(Integer, nullable=False)
+    result_total_count = Column(Integer, nullable=False)
+
+    def to_read_model(self) -> ResultSchema:
+        return ResultSchema(
+            id=self.id,
+            user_id=self.user_id,
+            company_id=self.company_id,
+            quiz_id=self.quiz_id,
+            created_at=self.created_at,
+            result_right_count=self.result_right_count,
+            result_total_count=self.result_total_count,
+        )
+
 

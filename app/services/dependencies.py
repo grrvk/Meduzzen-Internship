@@ -4,6 +4,7 @@ from .auth import AuthService
 from .companies import CompaniesService
 from .permissions import UserPermissions
 from .quizzes import QuizzesService
+from .results import ResultsService
 from .user_actions import UserActionHandler
 from .users import UsersService
 from app.repositories.auth import AuthRepository
@@ -12,6 +13,7 @@ from ..repositories.companies import CompaniesRepository
 from ..repositories.members import MembersRepository
 from ..repositories.questions import QuestionsRepository
 from ..repositories.quizes import QuizzesRepository
+from ..repositories.results import ResultsRepository
 
 
 def users_service():
@@ -30,6 +32,10 @@ def quizzes_service():
     return QuizzesService(CompaniesRepository, QuizzesRepository, QuestionsRepository,
                           AnswersRepository, MembersRepository)
 
+
+def results_service():
+    return ResultsService(CompaniesRepository, QuizzesRepository, QuestionsRepository,
+                          AnswersRepository, ResultsRepository)
 
 def permissions_service():
     return UserPermissions()

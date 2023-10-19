@@ -67,6 +67,20 @@ class QuizzesDataValidator:
             raise HTTPException(status_code=400, detail="no right answer for the question")
         return True
 
+    def question_dublicate_check(self, questions: dict):
+        question_data_set = set(question.get("question_text") for question in questions)
+        if len(question_data_set) != len(questions):
+            raise HTTPException(status_code=400, detail="quiz contains identical questions")
+        return True
+
+    def answer_duplicate_check(self, questions: dict):
+        for question in questions:
+            q_answers = question.get("answers")
+            answers_data_set = set(answer.get("answer_data") for answer in q_answers)
+            if len(answers_data_set) != len(q_answers):
+                raise HTTPException(status_code=400, detail="question contains identical answers")
+        return True
+
     async def question_delete_check(self, quiz_id: int):
         questions = await self.questions_repo.get_all_by(quiz_id=quiz_id)
         if len(questions) < 3:
@@ -110,6 +124,21 @@ class QuizzesDataValidator:
         if not answer:
             raise HTTPException(status_code=400, detail=f"such answer does not exists for such question")
         return answer, question
+
+
+class ResultsDataValidator:
+    def __init__(self, companies_repo: AbstractRepository, quizzes_repo: AbstractRepository,
+                 questions_repo: AbstractRepository, answers_repo: AbstractRepository):
+        self.company_repo: AbstractRepository = companies_repo()
+        self.quizzes_repo: AbstractRepository = quizzes_repo()
+        self.questions_repo: AbstractRepository = questions_repo()
+        self.answers_repo: AbstractRepository = answers_repo()
+
+    async def quiz_exist(self, company_id: int, quiz_id: int):
+        quiz = await self.quizzes_repo.get_one_by(id=quiz_id, company_id=company_id)
+        if not quiz:
+            raise HTTPException(status_code=400, detail="no such quiz exist for the company")
+        return quiz
 
 
 
