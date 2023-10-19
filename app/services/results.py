@@ -22,10 +22,9 @@ class ResultsService:
 
     async def get_result(self, company_id: int, quiz_id: int, user_answers: UserAnswerListSchema, current_user: User):
         quiz = await self.validator.quiz_exist(company_id, quiz_id)
-        if quiz.last_passed_at is not None:
-            if quiz.last_passed_at.weekday() != datetime.datetime.utcnow().weekday():
-                quiz_dict = {"last_passed_at": datetime.datetime.utcnow(), "quiz_frequency": quiz.quiz_frequency+1}
-                await self.quizzes_repo.update_one(quiz_id, quiz_dict)
+        if quiz.last_passed_at is None or quiz.last_passed_at.weekday() != datetime.datetime.utcnow().weekday():
+            quiz_dict = {"last_passed_at": datetime.datetime.utcnow(), "quiz_frequency": quiz.quiz_frequency + 1}
+            await self.quizzes_repo.update_one(quiz_id, quiz_dict)
         else:
             quiz_dict = {"last_passed_at": datetime.datetime.utcnow(), "quiz_frequency": quiz.quiz_frequency + 1}
             await self.quizzes_repo.update_one(quiz_id, quiz_dict)
@@ -35,19 +34,17 @@ class ResultsService:
             question = await self.questions_repo.get_one_by(id=answer.question_id, quiz_id=quiz.id)
             if question:
                 check_answer = await self.answers_repo.get_one_by(question_id=question.id, answer_data=answer.answer_data)
-                if check_answer:
-                    if check_answer.is_correct:
-                        correct_results += 1
+                if check_answer and check_answer.is_correct:
+                    correct_results += 1
 
         result = await self.results_repo.get_one_by(user_id=current_user.id, company_id=company_id, quiz_id=quiz_id)
+        result_dict = {"result_right_count": correct_results, "result_total_count": len(quiz.questions)}
         if result:
-            result_dict = {"result_right_count": correct_results, "result_total_count": len(quiz.questions)}
             await self.results_repo.update_one(result.id, result_dict)
             return result.id
-        else:
-            result_dict = {"user_id": current_user.id, "company_id": company_id, "quiz_id": quiz_id,
-                           "result_right_count": correct_results, "result_total_count": len(quiz.questions)}
-            return await self.results_repo.create_one(result_dict)
+
+        result_dict.update({"user_id": current_user.id, "company_id": company_id, "quiz_id": quiz_id})
+        return await self.results_repo.create_one(result_dict)
 
     async def get_average_in_company(self, company_id: int, current_user: User):
         results = await self.results_repo.get_all_by(company_id=company_id, user_id=current_user.id)
@@ -59,7 +56,7 @@ class ResultsService:
 
         if total_answers_count == 0:
             return 0
-        return float(right_answers_count / total_answers_count)
+        return round(float(right_answers_count / total_answers_count), 4)
 
     async def get_average_total(self, current_user: User):
         results = await self.results_repo.get_all_by(user_id=current_user.id)
@@ -71,4 +68,4 @@ class ResultsService:
 
         if total_answers_count == 0:
             return 0
-        return float(right_answers_count / total_answers_count)
+        return round(float(right_answers_count / total_answers_count), 4)
