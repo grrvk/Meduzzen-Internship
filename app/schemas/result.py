@@ -19,3 +19,14 @@ class ResultCreateRequest(BaseModel):
     created_at: datetime.datetime
     result_right_count: int
     result_total_count: int
+
+
+class ResultDetailSchema(BaseModel):
+    company_id: int
+    quiz_id: int
+    result_right_count: int
+    result_total_count: int
+
+
+class ResultListSchema(BaseModel):
+    results: list[ResultDetailSchema]

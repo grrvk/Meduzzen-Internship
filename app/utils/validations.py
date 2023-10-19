@@ -129,11 +129,14 @@ class QuizzesDataValidator:
 
 class ResultsDataValidator:
     def __init__(self, companies_repo: AbstractRepository, quizzes_repo: AbstractRepository,
-                 questions_repo: AbstractRepository, answers_repo: AbstractRepository):
+                 questions_repo: AbstractRepository, answers_repo: AbstractRepository,
+                 members_repo: AbstractRepository, users_repo: AbstractRepository):
         self.company_repo: AbstractRepository = companies_repo()
         self.quizzes_repo: AbstractRepository = quizzes_repo()
         self.questions_repo: AbstractRepository = questions_repo()
         self.answers_repo: AbstractRepository = answers_repo()
+        self.members_repo: AbstractRepository = members_repo()
+        self.users_repo: AbstractRepository = users_repo()
 
     async def answers_number_validator(self, user_answers: UserAnswerListSchema, quiz: Quiz):
         answers_questions_ids = set(answer.question_id for answer in user_answers.user_answers)
@@ -147,6 +150,26 @@ class ResultsDataValidator:
         if not quiz:
             raise HTTPException(status_code=400, detail="no such quiz exist for the company")
         return quiz
+
+    async def user_exists(self, user_id: int):
+        if not await self.users_repo.get_one_by(id=user_id):
+            raise HTTPException(status_code=400, detail="no such user")
+        return True
+
+    async def member_exist(self, member_id: int, company_id: int):
+        user = await self.users_repo.get_one_by(id=member_id)
+        company = await self.company_repo.get_one_by(id=company_id)
+        if user.id == company.owner_id:
+            return True
+        member = await self.members_repo.get_one_by(user_id=member_id, company_id=company_id)
+        if not member:
+            return None
+        return member
+
+    async def has_created_quizzes(self, quizzes: list[Quiz]):
+        if not quizzes:
+            raise HTTPException(status_code=400, detail="user have not created any quizzes to get data from")
+        return True
 
 
 

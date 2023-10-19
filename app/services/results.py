@@ -1,4 +1,7 @@
+import asyncio
 import datetime
+import csv
+import json
 
 from fastapi import HTTPException
 from redis import Redis
@@ -6,8 +9,8 @@ from redis import Redis
 from app.models.model import User
 from app.schemas.result import ResultCreateRequest
 from app.schemas.user_answer import UserAnswerSchema, UserAnswerListSchema
-from app.schemas.user_answer_redis import AnswerData
-from app.services.permissions import QuizzesPermissions
+from app.schemas.user_answer_redis import AnswerData, AnswerDataDetail
+from app.services.permissions import QuizzesPermissions, ResultsPermissions
 from app.services.redis import RedisService
 from app.utils.repository import AbstractRepository
 from app.utils.validations import ResultsDataValidator
@@ -16,13 +19,16 @@ from app.utils.validations import ResultsDataValidator
 class ResultsService:
     def __init__(self, companies_repo: AbstractRepository, quizzes_repo: AbstractRepository,
                  questions_repo: AbstractRepository, answers_repo: AbstractRepository,
-                 results_repo: AbstractRepository):
+                 results_repo: AbstractRepository, members_repo: AbstractRepository,
+                 users_repo: AbstractRepository):
         self.quizzes_repo: AbstractRepository = quizzes_repo()
         self.questions_repo: AbstractRepository = questions_repo()
         self.answers_repo: AbstractRepository = answers_repo()
         self.results_repo: AbstractRepository = results_repo()
 
-        self.validator = ResultsDataValidator(companies_repo, quizzes_repo, questions_repo, answers_repo)
+        self.validator = ResultsDataValidator(companies_repo, quizzes_repo, questions_repo, answers_repo,
+                                              members_repo, users_repo)
+        self.permissions = ResultsPermissions(companies_repo, members_repo)
         self.redis_service = RedisService()
 
     async def get_result(self, company_id: int, quiz_id: int, user_answers: UserAnswerListSchema, current_user: User,
@@ -78,3 +84,65 @@ class ResultsService:
         if total_answers_count == 0:
             return 0
         return round(float(right_answers_count / total_answers_count), 4)
+
+    async def get_results(self, current_user: User, redis_client: Redis):
+        answers = []
+        async for key in redis_client.scan_iter(f"answer:{current_user.id}:*"):
+            data = await self.redis_service.get_result_from_redis(redis_client, key)
+            answer = AnswerDataDetail(company_id=data.get("company_id"), quiz_id=data.get("quiz_id"),
+                                      question_id=data.get("question_id"), answer_data=data.get("answer_data"),
+                                      is_correct=data.get("is_correct"))
+            answers.append(answer)
+        return answers
+
+    async def get_results_for_user(self, current_user: User, user_id: int, redis_client: Redis):
+        quizzes = await self.quizzes_repo.get_all_by(created_by=current_user.id)
+        await self.validator.has_created_quizzes(quizzes)
+        await self.validator.user_exists(user_id)
+
+        answers = []
+        for quiz in quizzes:
+            async for key in redis_client.scan_iter(f"answer:{user_id}:{quiz.company_id}:{quiz.id}:*"):
+                data = await self.redis_service.get_result_from_redis(redis_client, key)
+                if await self.validator.member_exist(user_id, quiz.company_id):
+                    answer = AnswerDataDetail(company_id=data.get("company_id"), quiz_id=data.get("quiz_id"),
+                                              question_id=data.get("question_id"), answer_data=data.get("answer_data"),
+                                              is_correct=data.get("is_correct"))
+                    answers.append(answer)
+        return answers
+
+    async def get_all_results_for_company(self, current_user: User, company_id: int, redis_client: Redis):
+        await self.permissions.has_user_permissions(company_id, current_user)
+        answers = []
+        async for key in redis_client.scan_iter(f"answer:*:{company_id}:*:*"):
+            data = await self.redis_service.get_result_from_redis(redis_client, key)
+            if await self.validator.member_exist(int(data.get("user_id")), company_id):
+                answer = AnswerData(user_id=data.get("user_id"), company_id=data.get("company_id"),
+                                    quiz_id=data.get("quiz_id"), question_id=data.get("question_id"),
+                                    answer_data=data.get("answer_data"), is_correct=data.get("is_correct"))
+                answers.append(answer)
+        return answers
+
+    async def export_to_csv(self, redis_client: Redis, current_user: User):
+        with open('results.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            field = ["quiz", "question", "answer", "is_correct"]
+            writer.writerow(field)
+
+            async for key in redis_client.scan_iter(f"answer:{current_user.id}:*"):
+                data = await self.redis_service.get_result_from_redis(redis_client, key)
+                filtered_data = [data.get("quiz_id"), data.get("question_id"), data.get("answer_data"),
+                                 data.get("is_correct")]
+                writer.writerow(filtered_data)
+        return True
+
+    async def export_to_json(self, redis_client: Redis, current_user: User):
+        with open("results.json", "w") as outfile:
+            async for key in redis_client.scan_iter(f"answer:{current_user.id}:*"):
+                data = await self.redis_service.get_result_from_redis(redis_client, key)
+                filtered_data = {"quiz": data.get("quiz_id"), "question": data.get("question_id"),
+                                 "answer_data": data.get("answer_data"),
+                                 "is_correct": data.get("is_correct")}
+                json.dump(filtered_data, outfile)
+        return True
+      
