@@ -145,5 +145,4 @@ class ResultsService:
                                  "is_correct": data.get("is_correct")}
                 json.dump(filtered_data, outfile)
         return True
-
-
+      

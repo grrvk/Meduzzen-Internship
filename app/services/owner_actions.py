@@ -5,7 +5,7 @@ from app.repositories.invitations import InvitationsRepository
 from app.repositories.members import MembersRepository
 from app.repositories.requests import RequestsRepository
 from app.repositories.users import UsersRepository
-from app.schemas.actions import OwnerActionCreate
+from app.schemas.actions import OwnerActionCreate, OwnerActions
 from app.services.permissions import ActionsPermissions
 from app.utils.repository import AbstractRepository
 from app.utils.validations import ActionsValidator
@@ -158,19 +158,19 @@ class OwnerActionHandler:
                                                   CompaniesRepository, UsersRepository, MembersRepository)
 
     async def handle_action(self, action: OwnerActionCreate, current_user: User):
-        if action.action == "Send_invitation":
+        if action.action is OwnerActions.Send_invitation:
             return await self.action_service.send_invite(action, current_user)
-        elif action.action == "Cancel_invitation":
+        elif action.action is OwnerActions.Cancel_invitation:
             return await self.action_service.cancel_invite(action, current_user)
-        elif action.action == "Accept_request":
+        elif action.action is OwnerActions.Accept_request:
             return await self.action_service.accept_request(action, current_user)
-        elif action.action == "Deny_request":
+        elif action.action is OwnerActions.Deny_request:
             return await self.action_service.deny_request(action, current_user)
-        elif action.action == "Delete_member":
+        elif action.action is OwnerActions.Delete_member:
             return await self.action_service.delete_member(action, current_user)
-        elif action.action == "Add_admin":
+        elif action.action is OwnerActions.Add_admin:
             return await self.action_service.add_admin(action, current_user)
-        elif action.action == "Remove_admin":
+        elif action.action is OwnerActions.Remove_admin:
             return await self.action_service.remove_admin(action, current_user)
 
     async def get_all_invitations(self, company_id: int, current_user: User):
