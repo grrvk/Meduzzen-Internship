@@ -5,9 +5,7 @@ from redis import Redis
 from starlette import status
 from app.auth.utils_auth import check_token
 from app.db.database import get_redis_db
-from app.schemas.quizzes import QuizDateRequest
 from app.schemas.response import Response
-from app.schemas.result import AverageResultListDetail
 from app.schemas.user_answer import UserAnswerListSchema
 from app.services.auth import AuthService
 from app.services.dependencies import authentication_service, results_service
