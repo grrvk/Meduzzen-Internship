@@ -31,7 +31,6 @@ class RedisSettings(BaseSettings):
     redis_port: int = os.environ.get("REDIS_PORT")
     expire_time: int = os.environ.get("REDIS_EXPIRE_TIME")
 
-
 redis_settings = RedisSettings()
 
 

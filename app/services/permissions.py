@@ -82,8 +82,9 @@ class ResultsPermissions:
         self.companies_repo: AbstractRepository = companies_repo()
         self.members_repo: AbstractRepository = members_repo()
 
-    async def has_user_permissions(self, company_id: int, current_user: User):
-        company = await self.companies_repo.get_one_by(id=company_id)
+    async def has_user_permissions(self, company: Company, current_user: User):
+        if not company:
+            raise HTTPException(status_code=404, detail="company does not exist")
         if current_user.id == company.owner_id:
             return True
         member = await self.members_repo.get_one_by(user_id=current_user.id, company_id=company.id)
@@ -92,14 +93,25 @@ class ResultsPermissions:
         return True
 
 
-    async def user_owner_or_admin(self, company_id: int, current_user: User):
-        company = await self.companies_repo.get_one_by(id=company_id)
+    async def user_owner_or_admin(self, company: Company, current_user: User):
         if current_user.id == company.owner_id:
             return True
         member = await self.members_repo.get_one_by(user_id=current_user.id, company_id=company.id)
         if not member or member.role == "member":
             return None
         return True
+
+
+class NotificationsPermissions:
+    def __init__(self, notifications_repo: AbstractRepository):
+        self.permission_error = HTTPException(status_code=403, detail="Not enough permissions")
+        self.notifications_repo: AbstractRepository = notifications_repo()
+
+    async def can_answer_notification(self, notification_id: int, user_id: int):
+        notification = await self.notifications_repo.get_one_by(id=notification_id, receiver_id=user_id)
+        if not notification:
+            raise self.permission_error
+        return notification
 
 
 

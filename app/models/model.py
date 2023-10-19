@@ -7,6 +7,7 @@ from app.schemas.answers import AnswerSchema
 from app.schemas.companies import CompanySchema
 from app.schemas.invitations import InvitationSchema
 from app.schemas.members import MemberSchema
+from app.schemas.notifications import NotificationSchema
 from app.schemas.questions import QuestionSchema
 from app.schemas.quizzes import QuizSchema
 from app.schemas.requests import RequestSchema
@@ -226,6 +227,25 @@ class Result(Base):
             created_at=self.created_at,
             result_right_count=self.result_right_count,
             result_total_count=self.result_total_count,
+        )
+
+
+class Notification(Base):
+    __tablename__ = "Notification"
+
+    id = Column(Integer, primary_key=True)
+    receiver_id = Column(Integer, ForeignKey("User.id", ondelete="CASCADE"))
+    status = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), default=datetime.now(timezone.utc))
+    notification_data = Column(String, nullable=False)
+
+    def to_read_model(self) -> NotificationSchema:
+        return NotificationSchema(
+            id=self.id,
+            receiver_id=self.receiver_id,
+            status=self.status,
+            created_at=self.created_at,
+            notification_data=self.notification_data,
         )
 
 
