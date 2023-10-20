@@ -31,6 +31,11 @@ async def start_scheduler():
     scheduler.start()
 
 
+@app.on_event("shutdown")
+async def shutdown_event():
+    scheduler.shutdown()
+
+
 if __name__ == "__main__":
     uvicorn.run("main:app",
                 host=settings.fast_api_host,
