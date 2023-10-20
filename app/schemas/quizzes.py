@@ -11,7 +11,8 @@ class QuizSchema(BaseModel):
     quiz_name: str
     quiz_title: str
     quiz_description: str
-    quiz_frequency: int | None
+    quiz_frequency: int
+    created_at: datetime.datetime
     created_by: int
     updated_by: int
     company_id: int
@@ -23,7 +24,8 @@ class QuizDetailsSchema(BaseModel):
     quiz_name: str
     quiz_title: str
     quiz_description: str
-    quiz_frequency: int | None
+    quiz_frequency: int
+    created_at: datetime.datetime
     created_by: int
     updated_by: int
     company_id: int
@@ -35,8 +37,15 @@ class QuizCreateRequest(BaseModel):
     quiz_name: str
     quiz_title: str
     quiz_description: str
+    quiz_frequency: int
     company_id: int
     questions: list[QuestionCreateRequest]
+
+    @field_validator('quiz_frequency')
+    def frequency_validation(cls, quiz_frequency):
+        if quiz_frequency <= 0:
+            raise ValueError('Frequency must be greater than zero')
+        return quiz_frequency
 
 
 class QuizUpdateRequest(BaseModel):

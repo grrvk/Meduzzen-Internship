@@ -138,7 +138,8 @@ class Quiz(Base):
     quiz_name = Column(String, nullable=False)
     quiz_title = Column(String, nullable=False)
     quiz_description = Column(String, nullable=False)
-    quiz_frequency = Column(Integer, nullable=True, default=0)
+    quiz_frequency = Column(Integer, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), default=datetime.now(timezone.utc))
     created_by = Column(Integer, ForeignKey("User.id"))
     updated_by = Column(Integer, ForeignKey("User.id"))
     company_id = Column(Integer, ForeignKey("Company.id"))
@@ -153,6 +154,7 @@ class Quiz(Base):
             quiz_title=self.quiz_title,
             quiz_description=self.quiz_description,
             quiz_frequency=self.quiz_frequency,
+            created_at=self.created_at,
             created_by=self.created_by,
             updated_by=self.updated_by,
             company_id=self.company_id,
